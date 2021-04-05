@@ -14,13 +14,13 @@ class ConvexPolyhedron(GeoBody):
     class_level = 5 # the class level of ConvexPolyhedron
     """
     **Input:**
-    
+
     - convex_polygons: tuple of ConvexPolygons
 
     **Output:**
 
     - ConvexPolyhedron
-    
+
     - The correctness of convex_polygons are checked According to Euler's formula.
 
     - The normal of the convex polygons are checked and corrected which should be toward the outer direction
@@ -61,7 +61,7 @@ class ConvexPolyhedron(GeoBody):
     @classmethod
     def Sphere(cls,center,radius,n1=10,n2=3):
         """
-        A special function for creating the inscribed polyhedron of a sphere 
+        A special function for creating the inscribed polyhedron of a sphere
 
         **Input:**
 
@@ -71,7 +71,7 @@ class ConvexPolyhedron(GeoBody):
 
         - n1=10: The number of Points on a longitude circle
 
-        - n2=3: The number sections of a quater latitude circle 
+        - n2=3: The number sections of a quater latitude circle
 
         **Output:**
 
@@ -88,7 +88,7 @@ class ConvexPolyhedron(GeoBody):
         tc = [] # top circles
         bc = [] # bottom circles
         for i in range(n2-1):
-            angle_i = math.pi / 2 / n2 *(i+1) 
+            angle_i = math.pi / 2 / n2 *(i+1)
             height_i=radius * math.sin(angle_i)
             r_i=radius * math.cos(angle_i)
             tc.append(get_circle_point_list(
@@ -105,7 +105,7 @@ class ConvexPolyhedron(GeoBody):
             ))
         for i in range(n1):
             start = i
-            end = (i + 1) % n1 
+            end = (i + 1) % n1
             cpg_list.append(ConvexPolygon((mc[start],mc[end],tc[0][end],tc[0][start])))
             cpg_list.append(ConvexPolygon((mc[start],mc[end],bc[0][end],bc[0][start])))
             for j in range(1,n2-1):
@@ -119,7 +119,7 @@ class ConvexPolyhedron(GeoBody):
     @classmethod
     def Cylinder(cls,circle_center,radius,height_vector,n=10):
         """
-        A special function for creating the inscribed polyhedron of a sphere 
+        A special function for creating the inscribed polyhedron of a sphere
 
         **Input:**
 
@@ -127,7 +127,7 @@ class ConvexPolyhedron(GeoBody):
 
         - radius: The radius of the bottom circle
 
-        - height_vector: The Vector from the bottom circle center to the top circle center 
+        - height_vector: The Vector from the bottom circle center to the top circle center
 
         - n=10: The number of Points on the bottom circle
 
@@ -153,7 +153,7 @@ class ConvexPolyhedron(GeoBody):
     @classmethod
     def Cone(cls,circle_center,radius,height_vector,n=10):
         """
-        A special function for creating the inscribed polyhedron of a sphere 
+        A special function for creating the inscribed polyhedron of a sphere
 
         **Input:**
 
@@ -161,7 +161,7 @@ class ConvexPolyhedron(GeoBody):
 
         - radius: The radius of the bottom circle
 
-        - height_vector: The Vector from the bottom circle center to the top circle center 
+        - height_vector: The Vector from the bottom circle center to the top circle center
 
         - n=10: The number of Points on the bottom circle
 
@@ -187,13 +187,15 @@ class ConvexPolyhedron(GeoBody):
         self.point_set = set()
         self.segment_set = set()
         self.pyramid_set = set()
-        
-        for convex_polygon in self.convex_polygons:    
+
+        for convex_polygon in self.convex_polygons:
+            #print(convex_polygon)
             for point in convex_polygon.points:
+                #print(point)
                 self.point_set.add(point)
             for segment in convex_polygon.segments():
                 self.segment_set.add(segment)
-        
+
         self.center_point = self._get_center_point()
 
         for i in range(len(self.convex_polygons)):
@@ -204,6 +206,7 @@ class ConvexPolyhedron(GeoBody):
         if not self._check_normal():
             raise ValueError('Check Normal Fails For The Convex Polyhedron')
         if not self._euler_check():
+            #print(self.point_set)
             get_main_logger().critical('V:{} E:{} F:{}'.format(len(self.point_set),len(self.segment_set),len(self.convex_polygons)))
             raise ValueError('Check for the number of vertices, faces and edges fails, the polyhedron may not be closed')
 
@@ -219,11 +222,11 @@ class ConvexPolyhedron(GeoBody):
             if Vector(self.center_point,convex_polygon.plane.p) * convex_polygon.plane.n < -get_eps():
                 return False
         return True
-    
+
     def _get_center_point(self):
         """
         **Input:**
-        
+
         - self
 
         **Output:**
@@ -237,7 +240,7 @@ class ConvexPolyhedron(GeoBody):
             y += point.y
             z += point.z
         return Point(x / num_points,y / num_points, z / num_points)
-    
+
     def __repr__(self):
         return "ConvexPolyhedron({})".format(self.point_set)
 
@@ -260,7 +263,7 @@ class ConvexPolyhedron(GeoBody):
 
         elif isinstance(other,Segment):
             return ((other.start_point in self) and (other.end_point in self))
-        
+
         elif isinstance(other,ConvexPolygon):
             for point in other.points:
                 if not point in self:
@@ -281,16 +284,16 @@ class ConvexPolyhedron(GeoBody):
             convexpolygon_list = []
             for convexpolygon in self.convex_polygons:
                 convexpolygon_list.append(convexpolygon.move(v))
-            self.convex_polygons = tuple(convexpolygon_list)   
+            self.convex_polygons = tuple(convexpolygon_list)
             self.point_set = set()
             self.segment_set = set()
             self.pyramid_set = set()
-            for convex_polygon in self.convex_polygons: 
+            for convex_polygon in self.convex_polygons:
                 for point in convex_polygon.points:
                     self.point_set.add(point)
                 for segment in convex_polygon.segments():
                     self.segment_set.add(segment)
-        
+
             self.center_point = self._get_center_point()
 
             for i in range(len(self.convex_polygons)):

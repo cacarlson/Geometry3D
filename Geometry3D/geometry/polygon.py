@@ -22,7 +22,7 @@ def get_circle_point_list(center,normal,radius,n=10):
             raise ValueError("Bug detected! please contact the author")
     else:
         base_vector = x_unit_vector()
-    v1 = normal.normalized().cross(base_vector).normalized() 
+    v1 = normal.normalized().cross(base_vector).normalized()
     v2 = normal.normalized().cross(v1)
     v1 = v1 * radius
     v2 = v2 * radius
@@ -35,15 +35,15 @@ def get_circle_point_list(center,normal,radius,n=10):
 def get_triangle_area(pa,pb,pc):
     """
     **Input:**
-    
+
     - pa: a Point
-    
+
     - pb: a Point
-    
+
     - pc: a Point
 
     **Output:**
-    
+
     The area of the triangle composed by pa, pb and pc.
 
     Heron's formula is used
@@ -116,18 +116,19 @@ class ConvexPolygon(GeoBody):
                 ))
         else:
             raise TypeError("Parallelogram should be initialized with Point, Vector and Vector, but the given types are %s, %s and %s" %(type(base_point),type(v1),type(v2)))
-    
+
     def __init__(self,pts,reverse = False, check_convex=False):
         # merge same points
         points = copy.deepcopy(pts)
         self.points = sorted(set(points),key=points.index)
+        #print(self.points)
         if len(points) < 3:
             raise ValueError('Cannot build a polygon with number of points smaller than 3')
         if reverse:
             self.plane = -Plane(self.points[0],self.points[1],self.points[2])
         else:
             self.plane = Plane(self.points[0],self.points[1],self.points[2])
-    
+
         self.center_point = self._get_center_point()
 
         self._check_and_sort_points()
@@ -135,7 +136,7 @@ class ConvexPolygon(GeoBody):
     def segments(self):
         """
         **Input:**
-        
+
         - self
 
         **Output:**
@@ -149,11 +150,11 @@ class ConvexPolygon(GeoBody):
             else:
                 index_1 = i + 1
             yield Segment(self.points[index_0],self.points[index_1])
-    
+
     def _get_center_point(self):
         """
         **Input:**
-        
+
         - points: tuple of points
 
         **Output:**
@@ -167,15 +168,15 @@ class ConvexPolygon(GeoBody):
             y += point.y
             z += point.z
         return Point(float(x) / num_points,float(y) / num_points,float(z) / num_points)
-    
+
     def area(self):
         """
         **Input:**
-        
+
         - self
 
         **Output:**
-        
+
         - The area of the convex polygon
         """
         area = 0
@@ -191,13 +192,13 @@ class ConvexPolygon(GeoBody):
     def _check_and_sort_points(self):
         """
         **Input:**
-        
+
         -self
 
         **Output:**
 
         - True for check passed
-        
+
         - False for check not passed
 
         This is only a **weak** check, passing the check doesn't guarantee it is a convex polygon
@@ -220,7 +221,7 @@ class ConvexPolygon(GeoBody):
         point_list = [angle_point_dict[angle] for angle in sorted(angle_point_dict)]
         self.points = tuple(point_list)
         return True
-    
+
     def __repr__(self):
         return "ConvexPolygon({})".format(self.points)
 
@@ -247,18 +248,18 @@ class ConvexPolygon(GeoBody):
                     r2 = False
                     break
             return r1 and r2
-        
+
         elif isinstance(other,Segment):
             return (other.start_point in self) and (other.end_point in self)
         else:
             return NotImplementedError("")
-    
+
     def in_(self,other):
         """
         **Input:**
-        
+
         - self: ConvexPolygon
-        
+
         - other: Plane
 
         **Output:**
@@ -275,8 +276,8 @@ class ConvexPolygon(GeoBody):
             return (hash(self) == hash(other))
         else:
             return False
-    
-    
+
+
     def _get_point_hash_sum(self):
         """return the sum of hash of all points"""
         hash_sum = 0
@@ -315,7 +316,7 @@ class ConvexPolygon(GeoBody):
         return ConvexPolygon(self.points,reverse=True)
 
     def length(self):
-        """return the total length of ConvexPolygon""" 
+        """return the total length of ConvexPolygon"""
         length = 0
         for segment in self.segments():
             length += segment.length()

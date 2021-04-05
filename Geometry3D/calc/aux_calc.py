@@ -1,6 +1,5 @@
-# -*- coding: utf-8 -*-
 """
-Auxilary Calculation Module. 
+Auxilary Calculation Module.
 
 Auxilary calculation functions for calculating intersection
 """
@@ -30,7 +29,7 @@ def get_segment_from_point_list(point_list):
     - point_list: a list of Points
 
     **Output:**
-    
+
     The longest segment between the points
     '''
     if len(point_list) < 2:
@@ -53,13 +52,13 @@ def get_segment_from_point_list(point_list):
 def get_projection_length(v1,v2):
     '''
     **Input:**
-    
+
     - v1: Vector
-    
+
     - v2: Vector
 
     **Output:**
-    
+
     The length of vector that v1 projected on v2
     '''
     if not (isinstance(v1,Vector) or isinstance(v2,Vector)):
@@ -71,11 +70,11 @@ def get_relative_projection_length(v1,v2):
     **Input:**
 
     - v1: Vector
-    
+
     - v2: Vector
 
     **Output:**
-    
+
     The ratio of length of vector that v1 projected on v2 and the length of v2
     '''
     if not (isinstance(v1,Vector) or isinstance(v2,Vector)):
@@ -85,13 +84,13 @@ def get_relative_projection_length(v1,v2):
 def get_segment_convexpolyhedron_intersection_point_set(s,cph):
     '''
     **Input:**
-    
+
     - s: Segment
-    
+
     - cph: ConvexPolyhedron
 
     **Output:**
-    
+
     A set of intersection points
     '''
     point_set = set()
@@ -120,13 +119,13 @@ def get_segment_convexpolyhedron_intersection_point_set(s,cph):
 def get_segment_convexpolygon_intersection_point_set(s,cpg):
     '''
     **Input:**
-    
+
     - s: Segment
 
     - cpg: ConvexPolygon
 
     **Output:**
-    
+
     A set of intersection points
     '''
     point_set = set()
@@ -154,11 +153,11 @@ def get_segment_convexpolygon_intersection_point_set(s,cpg):
 def points_in_a_line(points):
     '''
     **Input:**
-    
+
     - points: Tuple or list of Points
 
     **Output:**
-    
+
     A set of intersection points
     '''
     if len(points) < 3:
@@ -175,13 +174,13 @@ def points_in_a_line(points):
 def get_halfline_convexpolyhedron_intersection_point_set(h,cph):
     '''
     **Input:**
-    
+
     - h: HalfLine
-    
+
     - cph: ConvexPolyhedron
 
     **Output:**
-    
+
     A set of intersection points
     '''
     point_set = set()

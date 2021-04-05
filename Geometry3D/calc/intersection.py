@@ -9,10 +9,13 @@ from ..geometry.polygon import ConvexPolygon
 from ..geometry.pyramid import Pyramid
 from ..geometry.polyhedron import ConvexPolyhedron
 from ..geometry.halfline import HalfLine
+from ..geometry.halfspace import HalfSpace
 
 from ..utils.solver import solve, null
 from ..utils.vector import Vector
 from ..utils.logger import get_main_logger
+
+from ..render import *
 
 from .acute import acute
 from .angle import angle, parallel, orthogonal
@@ -97,11 +100,11 @@ def intersection(a, b):
         return inter_plane_segment(b,a)
     elif isinstance(a, Plane) and isinstance(b, ConvexPolygon):
         return inter_plane_convexpolygon(a,b)
-    elif isinstance(a, ConvexPolygon) and isinstance(a, Plane):
+    elif isinstance(a, ConvexPolygon) and isinstance(b, Plane):
         return inter_plane_convexpolygon(b,a)
     elif isinstance(a, Plane) and isinstance(b, ConvexPolyhedron):
         return inter_plane_convexpolyhedron(a,b)
-    elif isinstance(a,ConvexPolyhedron) and isinstance(b, Plane):
+    elif isinstance(a, ConvexPolyhedron) and isinstance(b, Plane):
         return inter_plane_convexpolyhedron(b,a)
     elif isinstance(a, Plane) and isinstance(b, HalfLine):
         return inter_plane_halfline(a,b)
@@ -122,6 +125,10 @@ def intersection(a, b):
         return inter_segment_halfline(a,b)
     elif isinstance(a, HalfLine) and isinstance(b, Segment):
         return inter_segment_halfline(b,a)
+    elif isinstance(a, Segment) and isinstance(b, HalfSpace):
+        return inter_segment_halfspace(a,b)
+    elif isinstance(a, HalfSpace) and isinstance(b, Segment):
+        return inter_segment_halfspace(b,a)
     # convex polygon
     elif isinstance(a, ConvexPolygon) and isinstance(b,ConvexPolygon):
         return inter_convexpolygon_convexpolygon(a,b)
@@ -133,6 +140,10 @@ def intersection(a, b):
         return inter_convexpolygon_halfline(a,b)
     elif isinstance(a, HalfLine) and isinstance(b, ConvexPolygon):
         return inter_convexpolygon_halfline(b,a)
+    elif isinstance(a, HalfSpace) and isinstance(b, ConvexPolygon):
+        return inter_convexpolygon_halfspace(b,a)
+    elif isinstance(a, ConvexPolygon) and isinstance(b, HalfSpace):
+        return inter_convexpolygon_halfspace(a,b)
     # convex polyhedron
     elif isinstance(a,ConvexPolyhedron) and isinstance(b,ConvexPolyhedron):
         return inter_convexpolyhedron_convexpolyhedron(a,b)
@@ -140,6 +151,10 @@ def intersection(a, b):
         return inter_convexpolyhedron_halfline(a,b)
     elif isinstance(a, HalfLine) and isinstance(b, ConvexPolyhedron):
         return inter_convexpolyhedron_halfline(b,a)
+    elif isinstance(a, ConvexPolyhedron) and isinstance(b, HalfSpace):
+        return inter_convexpolyhedron_halfspace(a,b)
+    elif isinstance(a, HalfSpace) and isinstance(b, ConvexPolyhedron):
+        return inter_convexpolyhedron_halfspace(b,a)
     # halfline
     elif isinstance(a, HalfLine) and isinstance(b, HalfLine):
         return inter_halfline_halfline(a,b)
@@ -278,7 +293,7 @@ def inter_line_line(l1,l2):
         return Point(l1.sv + lmb * l1.dv)
 
 def inter_line_plane(l,p):
-    """intersection function for Line and Plane 
+    """intersection function for Line and Plane
     input:
     l: Line
     p: Plane
@@ -305,7 +320,7 @@ def inter_line_plane(l,p):
     return Point(l.sv + mu * l.dv)
 
 def inter_line_segment(l,s):
-    """intersection function for Line and Segment 
+    """intersection function for Line and Segment
     input:
     l: Line
     s: Segment
@@ -324,7 +339,7 @@ def inter_line_segment(l,s):
         raise TypeError("Bug detected! please contact the author")
 
 def inter_line_convexpolygon(l,cpg):
-    """intersection function for Line and ConvexPolygon 
+    """intersection function for Line and ConvexPolygon
     input:
     l: Line
     cpg: ConvexPolygon
@@ -364,7 +379,7 @@ def inter_line_convexpolygon(l,cpg):
         raise TypeError("Bug detected! please contact the author")
 
 def inter_line_convexpolyhedron(l,cph):
-    """intersection function for Line and ConvexPolygon 
+    """intersection function for Line and ConvexPolygon
     input:
     l: Line
     cpg: ConvexPolygon
@@ -422,10 +437,10 @@ def inter_plane_plane(a,b):
     # a x1 + b x2 + c x3 = d
     # e x1 + f x2 + g x3 = h
     # you will get infinitely many solutions (if the planes are
-    # intersecting). All those solutions are points on the 
+    # intersecting). All those solutions are points on the
     # intersection line. So we just chose two solutions, i.e.
     # two points, and lay a line through both of these.
-    if a== b:
+    if a == b:
         # Plane
         return a
     elif a.n.parallel(b.n):
@@ -468,12 +483,19 @@ def inter_plane_convexpolygon(a,b):
     Output:
     The intersection
     '''
+    if b in a:
+        return b
+
     inter_p_cpg = intersection(a,b.plane)
+    print("Finding Inter of: ", inter_p_cpg)
+
     if inter_p_cpg is None:
         return None
     elif isinstance(inter_p_cpg,Plane):
+        print("Returned: ", inter_p_cpg)
         return b
     elif isinstance(inter_p_cpg,Line):
+        print("Returned: ", intersection(inter_p_cpg,b))
         return intersection(inter_p_cpg,b)
     else:
         raise TypeError("Bug detected! please contact the author")
@@ -517,7 +539,7 @@ def inter_plane_halfline(a,b):
     '''Input:
     a: Plane
     b: HalfLine
-    
+
     Output:
     either None, Point or HalfLine
     '''
@@ -558,7 +580,7 @@ def inter_segment_segment(a,b):
             return Segment(point_list[0],point_list[1])
         else:
             raise TypeError("Bug detected! please contact the author")
-    else: 
+    else:
         inter_l_l = intersection(a.line,b.line)
         if inter_l_l is None:
             return None
@@ -652,7 +674,7 @@ def inter_segment_halfline(a,b):
             return Segment(point_list[0],point_list[1])
         else:
             raise TypeError("Bug detected! please contact the author")
-    else: 
+    else:
         inter_l_l = intersection(a.line,b.line)
         if inter_l_l is None:
             return None
@@ -711,7 +733,7 @@ def inter_convexpolygon_convexPolyhedron_old(cph,cpg):
     """Input:
     cph: a ConvexPolyhedron
     cpg: a ConvexPolygon
-     
+
     Output:
     a Point, Segment or ConvexPolygon
     the intersection part of cph and cpg
@@ -744,7 +766,7 @@ def inter_convexpolygon_convexPolyhedron(cph,cpg):
     """Input:
     cph: a ConvexPolyhedron
     cpg: a ConvexPolygon
-     
+
     Output:
     a Point, Segment or ConvexPolygon
     the intersection part of cph and cpg
@@ -886,7 +908,7 @@ def inter_halfline_halfline(a,b):
             return Segment(point_list[0],point_list[1])
         else:
             raise TypeError("Bug detected! please contact the author")
-    else: 
+    else:
         inter_l_l = intersection(a.line,b.line)
         if inter_l_l is None:
             return None
@@ -897,5 +919,131 @@ def inter_halfline_halfline(a,b):
                 return None
         else:
             raise TypeError("Bug detected! please contact the author")
+
+# def inter_point_halfspace(p,h):
+#     """intersection function for Point and HalfSpace
+#     input:
+#     h: HalfSpace
+#     p: Point
+#
+#     output:
+#     intersection
+#     """
+#     if p in h:
+#         return p
+#     else:
+#         return None
+
+def inter_segment_halfspace(s,h):
+    """intersection function for HalfSpace and Segment
+    input:
+    h: HalfSpace
+    s: segment
+
+    output:
+    intersection
+    """
+    if (s.start_point in h) and (s.end_point in h):
+        return s
+
+    inter_point_set = set()
+
+    pln_inter = inter_plane_segment(h.plane, s)
+    if isinstance(pln_inter, Point):
+        inter_point_set.add(pln_inter)
+
+    if s.start_point in h:
+        inter_point_set.add(s.start_point)
+    if s.end_point in h:
+        inter_point_set.add(s.end_point)
+
+    inter_point_list = list(inter_point_set)
+    if len(inter_point_list) == 0:
+        return None
+    elif len(inter_point_list) == 1:
+        return inter_point_list[0]
+    elif len(inter_point_list) == 2:
+        return Segment(inter_point_list[0],inter_point_list[1])
+    else:
+        get_main_logger().error('length of inter_point_list is {}, list is {}'.format(len(inter_point_list),inter_point_list))
+        raise TypeError("Bug detected! please contact the author")
+
+def inter_convexpolygon_halfspace(cpg,h):
+    """Input:
+    cpg: a ConvexPolygon
+    h: a halfspace
+
+    Output:
+    a Point, Segment or ConvexPolygon
+    the intersection part of cph and cpg
+    """
+
+    if cpg in h:
+        return cpg
+
+    point_set = set()
+
+    for seg in cpg.segments():
+        inter_s_h = intersection(seg, h)
+        if isinstance(inter_s_h, Segment):
+            point_set.add(inter_s_h.start_point)
+            point_set.add(inter_s_h.end_point)
+        elif isinstance(inter_s_h, Point):
+            point_set.add(inter_s_h)
+    #r.add((h.plane,'b',2),normal_length=0)
+    inter_cpg_pl = intersection(cpg, h.plane)
+
+    print("Inter: ", inter_cpg_pl)
+
+    # could add same points again but not a big deal
+    if isinstance(inter_cpg_pl, Point):
+        point_set.add(inter_cpg_pl)
+    elif isinstance(inter_cpg_pl, Segment):
+        point_set.add(inter_cpg_pl.start_point)
+        point_set.add(inter_cpg_pl.end_point)
+
+    point_list = list(point_set)
+    if len(point_list) == 0:
+        return None
+    elif len(point_list) == 1:
+        return point_list[0]
+    elif len(point_list) == 2:
+        return Segment(point_list[0], point_list[1])
+    else:
+        return ConvexPolygon(point_list)
+
+def inter_convexpolyhedron_halfspace(cph, h):
+    """Input:
+    h: a halfspace
+    cpg: a ConvexPolygon
+
+    Output:
+    a Point, Segment or ConvexPolygon
+    the intersection part of cph and cpg
+    """
+    if cph in h:
+        return cph
+
+    inter_faces = set()
+
+    for face in cph.convex_polygons:
+        if face in h.plane:
+            return face
+        print("Inter Face: ", face, h)
+        inter_f_h = intersection(face, h)
+        if isinstance(inter_f_h, ConvexPolygon):
+            inter_faces.add(inter_f_h)
+
+    print("Inter Plane: ", cph, h.plane)
+    inter_cph_pl = intersection(cph, h.plane)
+
+    if inter_cph_pl is None or isinstance(inter_cph_pl, Point) or isinstance(inter_cph_pl, Segment):
+        return inter_cph_pl
+    elif isinstance(inter_cph_pl, ConvexPolygon):
+        inter_faces.add(inter_cph_pl)
+        return ConvexPolyhedron(tuple(inter_faces))
+    else:
+        print("what?")
+        raise TypeError("Bug detected! please contact the author")
 
 __all__=('intersection',)

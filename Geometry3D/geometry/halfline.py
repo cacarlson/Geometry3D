@@ -13,7 +13,7 @@ import copy
 class HalfLine(GeoBody):
     """
     **Input:**
-    
+
     - HalfLine(Point,Point)
 
     - HalfLine(Point,Vector)
@@ -49,7 +49,7 @@ class HalfLine(GeoBody):
             r1 = other in self.line
             if r1:
                 v1 = Vector(self.point,other)
-                return v1 * self.vector > -get_eps() 
+                return v1 * self.vector > -get_eps()
             else:
                 return False
         if isinstance(other,Segment):

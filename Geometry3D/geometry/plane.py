@@ -9,26 +9,26 @@ from ..utils.constant import *
 class Plane(GeoBody):
     """
     - Plane(Point, Point, Point):
-    
+
     Initialise a plane going through the three given points.
 
     - Plane(Point, Vector, Vector):
-    
+
     Initialise a plane given by a point and two vectors lying on
     the plane.
 
     - Plane(Point, Vector):
-    
+
     Initialise a plane given by a point and a normal vector (point
     normal form)
 
     - Plane(a, b, c, d):
-    
+
     Initialise a plane given by the equation
     ax1 + bx2 + cx3 = d (general form).
     """
     class_level = 2 # the class level of Plane
-    
+
     @classmethod
     def xy_plane(cls):
         """return xy plane which is a Plane"""
@@ -43,13 +43,15 @@ class Plane(GeoBody):
     def xz_plane(cls):
         """return xz plane which is a Plane"""
         return cls(origin(),y_unit_vector())
-    
+
     def __init__(self, *args):
         if len(args) == 3:
             a, b, c = args
+            vab, vec = None, None
+
             if (isinstance(a, Point) and
                 isinstance(b, Point) and
-                isinstance(b, Point)):
+                isinstance(c, Point)):
                 # for three points we just calculate the vectors AB
                 # and AC and continue like we were given two vectors
                 # instead
@@ -68,7 +70,7 @@ class Plane(GeoBody):
             self._init_pn(*args)
         elif len(args) == 4:
             self._init_gf(*args)
-    
+
     def _init_pn(self, p, normale):
         """Initialise a plane given in the point normal form."""
         self.p = p
@@ -111,7 +113,7 @@ class Plane(GeoBody):
 
     def point_normal(self):
         """Returns (p, n) so that you can build the equation
-            _   _   
+            _   _
         E: (x - p) n = 0
 
         to describe the plane.
@@ -139,7 +141,7 @@ class Plane(GeoBody):
     def __hash__(self):
         """return the hash of a Plane"""
         return hash(("Plane",round(self.n[0],SIG_FIGURES),round(self.n[1],SIG_FIGURES),round(self.n[2],SIG_FIGURES),round(self.n * self.p.pv(),SIG_FIGURES)))
-    
+
     def move(self,v):
         """Return the plane that you get when you move self by vector v, self is also moved"""
         if isinstance(v,Vector):
@@ -150,7 +152,7 @@ class Plane(GeoBody):
 
     def parametric(self):
         """Returns (u, v, w) so that you can build the equation
-           _   _    _    _ 
+           _   _    _    _
         E: x = u + rv + sw ; (r, s) e R
 
         to describe the plane (a point and two vectors).
@@ -170,7 +172,7 @@ class Plane(GeoBody):
         ])
         w = Vector(*s(1))
         return (self.p.pv(), v, w)
-    
+
     def __neg__(self):
         """Return the negative plane, the normal is the negative normal"""
         return Plane(self.p,-self.n)
