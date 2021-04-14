@@ -1,22 +1,6 @@
 import math
 import copy
-from ..geometry.line import Line
-from ..geometry.plane import Plane
-from ..geometry.point import Point
-from ..geometry.segment import Segment
-from ..geometry.polygon import ConvexPolygon
-from ..geometry.pyramid import Pyramid
-from ..geometry.polyhedron import ConvexPolyhedron
-from ..geometry.halfline import HalfLine
-
-from ..utils.solver import solve, null
-from ..utils.vector import Vector
-from ..utils.logger import get_main_logger
-
-from .acute import acute
-from .angle import angle, parallel, orthogonal
-from .aux_calc import get_segment_from_point_list,get_segment_convexpolyhedron_intersection_point_set,get_segment_convexpolygon_intersection_point_set,points_in_a_line,get_halfline_convexpolyhedron_intersection_point_set
-
+from Geometry3D import *
 # The above libraries contain those that were used in the source code of the calc.intersection module
 
 def inter_halfspace_convexpolyhedron(a,b,v):
@@ -28,16 +12,16 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 	# b is a convex polyhedron
 	# v is the vertex that we want to cut
 	a = copy.deepcopy(a)
-    b = copy.deepcopy(b)
-    v = copy.deepcopy(v)
+	b = copy.deepcopy(b)
+	v = copy.deepcopy(v)
 
 	if not isinstance(a, Plane) or not isinstance(b, ConvexPolyhedron) or not isinstance(v, Point):
 		raise TypeError("Incorrect Input")
 	pol = inter_plane_convexpolyhedron(a,b)
 	# pol is a convex polygon which has attributes such as its vertices and the plane it belongs to
 	if not isinstance(pol, ConvexPolygon):		# check if pol is a polygon or not
-  		print("No cut ocurred!")		# we should be careful with this case
-  		return b
+			print("No cut ocurred!")		# we should be careful with this case
+			return b
 	s = Segment(pol.points[0], pol.points[1])					# first segment (edge) of pol
 	c = pol.plane.n.cross(s.line.dv)							# vector parallel to a side of the cube on its certain face
 	# Here pol.plane is the plane that pol belongs to and pol.plane.n is its unit normal vector
@@ -49,7 +33,7 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 	v1, v2, v3, v4 = Point(x + c), Point(x - c), Point(y + c), Point(y - c)	# first group of four vertices on the face of the cube
 	e = pol.plane.n * 2 * length
 	if pol.plane.n * v.pv() > pol.plane.n * pol.plane.p.pv():	# we decide for the "direction" of the halfspace (cube)
-  		e = e * (-1)
+			e = e * (-1)
 	u1, u2, u3, u4 = Point(v1 + e), Point(v2 + e), Point(v3 + e), Point(v4 + e)	# second group of four vertices on the opposite face of the cube
 	f1 = ConvexPolygon(tuple(v1, v2, v3, v4))					# faces 1 through 6 of the cube
 	f2 = ConvexPolygon(tuple(u1, u2, u3, u4))
