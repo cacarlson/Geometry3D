@@ -19,6 +19,5 @@ r = Renderer(backend='matplotlib')
 r.add((T,'r',1),normal_length=0)
 for s in S:
 	r.add((s,'b',2),normal_length=0)
+r.add((C,'g',3),normal_length=0)
 r.show()
-#init_guess = [0,0,0]
-#res = minimize(KCutSimplex, init_guess, options={'xatol': 1e-8, 'disp': True})

@@ -34,14 +34,14 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 	e = pol.plane.n * 2 * length
 	if pol.plane.n * v.pv() > pol.plane.n * pol.plane.p.pv():	# we decide for the "direction" of the halfspace (cube)
 			e = e * (-1)
-	u1, u2, u3, u4 = Point(v1 + e), Point(v2 + e), Point(v3 + e), Point(v4 + e)	# second group of four vertices on the opposite face of the cube
-	f1 = ConvexPolygon(tuple(v1, v2, v3, v4))					# faces 1 through 6 of the cube
-	f2 = ConvexPolygon(tuple(u1, u2, u3, u4))
-	f3 = ConvexPolygon(tuple(u1, u2, v1, v2))
-	f4 = ConvexPolygon(tuple(v3, v4, u3, u4))
-	f5 = ConvexPolygon(tuple(u1, u3, v1, v3))
-	f6 = ConvexPolygon(tuple(v2, v4, u2, u4))
-	box = ConvexPolyhedron(tuple(f1, f2, f3, f4, f5, f6))		# cube that mimics the halfspace
+	u1, u2, u3, u4 = Point(v1.pv() + e), Point(v2.pv() + e), Point(v3.pv() + e), Point(v4.pv() + e)	# second group of four vertices on the opposite face of the cube
+	f1 = ConvexPolygon([v1, v2, v3, v4])					# faces 1 through 6 of the cube
+	f2 = ConvexPolygon([u1, u2, u3, u4])
+	f3 = ConvexPolygon([u1, u2, v1, v2])
+	f4 = ConvexPolygon([v3, v4, u3, u4])
+	f5 = ConvexPolygon([u1, u3, v1, v3])
+	f6 = ConvexPolygon([v2, v4, u2, u4])
+	box = ConvexPolyhedron([f1, f2, f3, f4, f5, f6])		# cube that mimics the halfspace
 	return intersection(box, b)		# return the intersection
 
 
@@ -63,7 +63,8 @@ def compute_cut(cuts):
 			continue			# we should be careful with this case
 		cut_cost += grid_edges_cost(pol)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
 		cut_cost += corner_edges_cost(pol)		# compute the contribution of the corner edges to the cost of a cut
-		T_active = intersection(c,T_active,V[i])
+		# T_active = intersect(HalfSpace(c), T_active)
+		T_active = inter_halfspace_convexpolyhedron(c,T_active,V[i])
 	return cut_cost
 
 def grid_edges_cost(a):
@@ -75,6 +76,8 @@ def grid_edges_cost(a):
 	a_grid = intersection(C, a)		# portion of a which contributes to grid edges' cost
 	# check whether a_grid is a convex polygon.
 	for seg in T.segment_set:
+		# we don't have the multiply by side length (be consistent)
+		# LP cost depends on this choice
 		grid_cost += a_grid.area() * seg.length() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
 	return grid_cost
 
@@ -86,20 +89,31 @@ def corner_edges_cost(a):
 	corner_cost = float()
 	for i,s in enumerate(S):
 		a_corner = intersection(a, s)		# portion of a that contributes to corner edges' cost related to s
+		# TODO: What if None?
 		if not isinstance(a_corner, ConvexPolygon):
+			# this could be empty
 			continue		# we should be careful with this case
+		# TODO: Maybe we keep this around?
 		face_i = ConvexPolygon(tuple(s.point_set - {V[i]}))			# face of S[i] opposite to the vertex V[i]
-		proj_vertices = set()										# This is the set of vertices of a projection of a_corner on face_i
+		proj_vertices = set()
+										# This is the set of vertices of a projection of a_corner on face_i
 		for p in a_corner.points:
 			# We need to make sure that p is not equal to V[i] otherwise Line() function below will raise a value error.
 			proj_vertex = intersection(Line(V[i], p),face_i)	# This is the "projection" of p on face_i
 			if not isinstance(proj_vertex, Point):
+				# Note to Charlie: This should not happen so error works
 				raise TypeError("Intersection is not a point.")				# We need to check whether p is of type Point.
 			proj_vertices.add(proj_vertex)
 		if len(proj_vertices) < 3:
+			# Note to Charlie: This should nto happen either
 			raise ValueError("To build a polygon the number of points cannot be less than 3")		# The case when projection of a_corner on face_i is not a polygon.
 		proj_cut = ConvexPolygon(tuple(proj_vertices))
-		corner_cost += proj_cut.area()				# compute the contribution of corner edges incident to V[i]. We should also include a multiplicative constant.
+		corner_cost += proj_cut.area()	#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
+		# cost of face_i should be the same as moving it a little above
+		# area of trianlge times sum of unit vectors times unit vectors
+		# root(6)/2
+		# root(3)/2 * side length <-
+		# compute the contribution of corner edges incident to V[i]. We should also include a multiplicative constant.
 	return corner_cost
 
 # The above libraries contain those that were used in the source code of the calc.intersection module
@@ -132,8 +146,8 @@ def construct_simplex(a):
 
 	# We need to define C= T \ union_of_(S[1], S[2], S[3], S[4])
 	C = copy.deepcopy(T)
-	# for i, trim in enumerate(trims):
-	# 	print(V[i],trim.plane)
-	# 	C = (inter_halfspace_convexpolyhedron(trim.plane, C, V[i]))
+	for i, trim in enumerate(trims):
+		print(V[i],trim.plane)
+		C = (inter_halfspace_convexpolyhedron(trim.plane, C, V[i]))
 
 	return (V, T, S, C)
