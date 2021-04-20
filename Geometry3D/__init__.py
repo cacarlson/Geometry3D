@@ -9,6 +9,7 @@ __all__ = (
     "Sphere",
     "Cone",
     "Cylinder",
+    "Simplex",
     "ConvexPolygon",
     "HalfSpace",
     "Parallelogram",

@@ -5,7 +5,7 @@ from .point import Point,origin
 from .segment import Segment
 from .polygon import ConvexPolygon,Parallelogram,get_circle_point_list,Circle
 from .pyramid import Pyramid
-from .polyhedron import ConvexPolyhedron,Parallelepiped,Sphere,Cylinder,Cone
+from .polyhedron import ConvexPolyhedron,Parallelepiped,Sphere,Cylinder,Cone, Simplex
 from .halfline import HalfLine
 from .halfspace import HalfSpace
 __all__ = (
@@ -14,6 +14,7 @@ __all__ = (
     "Sphere",
     "Cone",
     "Cylinder",
+    "Simplex",
     "ConvexPolygon",
     "HalfSpace",
     "Parallelogram",
