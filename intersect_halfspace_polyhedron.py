@@ -44,7 +44,45 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 	box = ConvexPolyhedron([f1, f2, f3, f4, f5, f6])		# cube that mimics the halfspace
 	return intersection(box, b)		# return the intersection
 
+'''
+# This is for testing [	STARTED	]
+alpha = 1/3
 
+# The above libraries contain those that were used in the source code of the calc.intersection module
+
+# Setup the instance
+v1, v2, v3, v4 = Point(1,1,1), Point(-1,-1,1), Point(1,-1,-1), Point(-1,1,-1)	# Vertices of the simplex T ??
+V = [v1, v2, v3, v4]														# V is the list of vertices of T so that V[i] = vi of T.
+face1 = ConvexPolygon([v1, v2, v3])									# Faces of the T
+face2 = ConvexPolygon([v1, v2, v4])
+face3 = ConvexPolygon([v1, v3, v4])
+face4 = ConvexPolygon([v2, v3, v4])
+T = ConvexPolyhedron([face1, face2, face3, face4])						# Simplex that we want to cut
+
+	# We need to define S = [s1, s2, s3, s4]
+S = []
+trims = []
+for v in V:
+	pt_set = [v]
+	for u in V:
+		if u == v:
+			continue
+		pt_set.append(Point((1-alpha)*v.pv() + (alpha)*u.pv()))
+	faces = []
+	for face in itertools.combinations(pt_set, 3):
+		faces.append(ConvexPolygon(tuple(face)))			# Input to ConvexPolygon() should be a tuple
+	S.append(ConvexPolyhedron(tuple(faces)))				# Input to ConvexPolyhedron() should be a tuple
+	trims.append(ConvexPolygon(tuple(pt_set[1:])))			# Input to ConvexPolygon() should be a tuple
+
+	# We need to define C= T - union_of_(S[1], S[2], S[3], S[4])
+C = copy.deepcopy(T)
+for i, trim in enumerate(trims):
+		#print(V[i],trim.plane)
+	C = (inter_halfspace_convexpolyhedron(trim.plane, C, V[i]))
+
+
+# This is for testing [ ENDED ]
+'''
 def compute_cut(cuts):
 	# T is the simplex that we want to cut.
 	# V is the list of vertices of T so that V[i] = vertex i of T.
@@ -76,9 +114,10 @@ def grid_edges_cost(a):
 	a_grid = intersection(C, a)		# portion of a which contributes to grid edges' cost
 	# check whether a_grid is a convex polygon.
 	for seg in T.segment_set:
-		# we don't have the multiply by side length (be consistent)
+		# we don't have to multiply by side length (be consistent)
 		# LP cost depends on this choice
-		grid_cost += a_grid.area() * seg.length() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
+		# Jafar: Removed seg.length() from the below product
+		grid_cost += a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
 	return grid_cost
 
 def corner_edges_cost(a):
@@ -108,7 +147,8 @@ def corner_edges_cost(a):
 			# Note to Charlie: This should nto happen either
 			raise ValueError("To build a polygon the number of points cannot be less than 3")		# The case when projection of a_corner on face_i is not a polygon.
 		proj_cut = ConvexPolygon(tuple(proj_vertices))
-		corner_cost += proj_cut.area()	#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
+		corner_cost += proj_cut.area() * math.sqrt(3) / 2	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
+		#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
 		# cost of face_i should be the same as moving it a little above
 		# area of trianlge times sum of unit vectors times unit vectors
 		# root(6)/2
@@ -117,9 +157,10 @@ def corner_edges_cost(a):
 	return corner_cost
 
 # The above libraries contain those that were used in the source code of the calc.intersection module
+
 def construct_simplex(a):
 	# The above libraries contain those that were used in the source code of the calc.intersection module
-
+	global V, T, C, S 	# Jafar: These variables are accessed by compute_cut(), grid_edges_cost(), corner_edges_cost() functions.
 	# Setup the instance
 	v1, v2, v3, v4 = Point(1,1,1), Point(-1,-1,1), Point(1,-1,-1), Point(-1,1,-1)	# Vertices of the simplex T ??
 	V = [v1, v2, v3, v4]														# V is the list of vertices of T so that V[i] = vi of T.
@@ -140,14 +181,15 @@ def construct_simplex(a):
 			pt_set.append(Point((1-a)*v.pv() + (a)*u.pv()))
 		faces = []
 		for face in itertools.combinations(pt_set, 3):
-			faces.append(ConvexPolygon(face))
-		S.append(ConvexPolyhedron(faces))
-		trims.append(ConvexPolygon(list(pt_set)[1:]))
+			faces.append(ConvexPolygon(tuple(face)))			# Jafar: Input to ConvexPolygon() should be a tuple
+		S.append(ConvexPolyhedron(tuple(faces)))				# Jafar: Input to ConvexPolyhedron() should be a tuple
+		trims.append(ConvexPolygon(tuple(pt_set[1:])))			# Jafar: Input to ConvexPolygon() should be a tuple
 
-	# We need to define C= T \ union_of_(S[1], S[2], S[3], S[4])
+	# We need to define C= T - union_of_(S[1], S[2], S[3], S[4])
 	C = copy.deepcopy(T)
 	for i, trim in enumerate(trims):
-		print(V[i],trim.plane)
+		#print(V[i],trim.plane)
 		C = (inter_halfspace_convexpolyhedron(trim.plane, C, V[i]))
 
-	return (V, T, S, C)
+	return (V, T, S, C, trims)		#Jafar: Added trims to the output for testing purposes.
+

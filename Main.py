@@ -14,7 +14,9 @@ def KCutSimplex(args):
 	x,y = args
 	return abs(x+y)
 
-V,T,S,C = construct_simplex(1/3)
+alpha = 1/3
+V,T,S,C, trims = construct_simplex(alpha)		# Jafar: Use trims for a candidate cut for testing purposes.
+print(compute_cut([trim.plane for trim in trims]), alpha)
 r = Renderer(backend='matplotlib')
 r.add((T,'r',1),normal_length=0)
 for s in S:
