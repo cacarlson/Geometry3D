@@ -44,45 +44,6 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 	box = ConvexPolyhedron([f1, f2, f3, f4, f5, f6])		# cube that mimics the halfspace
 	return intersection(box, b)		# return the intersection
 
-'''
-# This is for testing [	STARTED	]
-alpha = 1/3
-
-# The above libraries contain those that were used in the source code of the calc.intersection module
-
-# Setup the instance
-v1, v2, v3, v4 = Point(1,1,1), Point(-1,-1,1), Point(1,-1,-1), Point(-1,1,-1)	# Vertices of the simplex T ??
-V = [v1, v2, v3, v4]														# V is the list of vertices of T so that V[i] = vi of T.
-face1 = ConvexPolygon([v1, v2, v3])									# Faces of the T
-face2 = ConvexPolygon([v1, v2, v4])
-face3 = ConvexPolygon([v1, v3, v4])
-face4 = ConvexPolygon([v2, v3, v4])
-T = ConvexPolyhedron([face1, face2, face3, face4])						# Simplex that we want to cut
-
-	# We need to define S = [s1, s2, s3, s4]
-S = []
-trims = []
-for v in V:
-	pt_set = [v]
-	for u in V:
-		if u == v:
-			continue
-		pt_set.append(Point((1-alpha)*v.pv() + (alpha)*u.pv()))
-	faces = []
-	for face in itertools.combinations(pt_set, 3):
-		faces.append(ConvexPolygon(tuple(face)))			# Input to ConvexPolygon() should be a tuple
-	S.append(ConvexPolyhedron(tuple(faces)))				# Input to ConvexPolyhedron() should be a tuple
-	trims.append(ConvexPolygon(tuple(pt_set[1:])))			# Input to ConvexPolygon() should be a tuple
-
-	# We need to define C= T - union_of_(S[1], S[2], S[3], S[4])
-C = copy.deepcopy(T)
-for i, trim in enumerate(trims):
-		#print(V[i],trim.plane)
-	C = (inter_halfspace_convexpolyhedron(trim.plane, C, V[i]))
-
-
-# This is for testing [ ENDED ]
-'''
 def compute_cut(cuts):
 	# T is the simplex that we want to cut.
 	# V is the list of vertices of T so that V[i] = vertex i of T.
