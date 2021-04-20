@@ -181,6 +181,21 @@ class ConvexPolyhedron(GeoBody):
             cpg_list.append(ConvexPolygon((top_point,circle_point_list[start],circle_point_list[end])))
         return cls(tuple(cpg_list))
 
+    @classmethod
+    def Simplex(cls):
+        pa = Point(1,1,1)
+        pb = Point(-1,-1,1)
+        pc = Point(-1,1,-1)
+        pd = Point(1,-1,-1)
+
+        f1 = ConvexPolygon((pa, pb, pc))
+        f2 = ConvexPolygon((pa, pb, pd))
+        f3 = ConvexPolygon((pa, pc, pd))
+        f4 = ConvexPolygon((pb, pc, pd))
+
+        return ConvexPolyhedron((f1,f2,f3,f4))
+
+
     def __init__(self,convex_polygons):
         self.convex_polygons = list(copy.deepcopy(convex_polygons))
         # self.convex_polygons = list(convex_polygons)
@@ -362,5 +377,6 @@ Parallelepiped = ConvexPolyhedron.Parallelepiped
 Cone = ConvexPolyhedron.Cone
 Sphere = ConvexPolyhedron.Sphere
 Cylinder = ConvexPolyhedron.Cylinder
+Simplex = ConvexPolyhedron.Simplex
 
-__all__=("ConvexPolyhedron","Parallelepiped","Cone","Sphere","Cylinder")
+__all__=("ConvexPolyhedron","Parallelepiped","Cone","Sphere","Cylinder", "Simplex")
