@@ -59,6 +59,7 @@ def compute_cut(cuts):
 			raise TypeError("We should consider the case when T_active is not a polyhedron.")
 		pol = intersection(c,T_active)		# pol is a polygon that cuts the "uncut" portion of the simplex T
 		if not isinstance(pol,ConvexPolygon):
+			cut_cost += 10000 #hack!
 			continue			# we should be careful with this case
 		cut_cost += grid_edges_cost(pol)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
 		cut_cost += corner_edges_cost(pol)		# compute the contribution of the corner edges to the cost of a cut
