@@ -73,6 +73,8 @@ def grid_edges_cost(a):
 	# a is guaranteed to be a convex polygon
 	grid_cost = float()
 	a_grid = intersection(C, a)		# portion of a which contributes to grid edges' cost
+	if (a_grid == None):
+		return grid_cost
 	# check whether a_grid is a convex polygon.
 	for seg in T.segment_set:
 		# we don't have to multiply by side length (be consistent)
@@ -153,4 +155,3 @@ def construct_simplex(a):
 		C = (inter_halfspace_convexpolyhedron(trim.plane, C, V[i]))
 
 	return (V, T, S, C, trims)		#Jafar: Added trims to the output for testing purposes.
-
