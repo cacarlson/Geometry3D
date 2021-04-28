@@ -14,32 +14,40 @@ def KCut(data):
 	#print(cut_data)
 	cuts = [Plane(*val) for val in cut_data]
 	#print(cuts)
-	print(compute_cut(cuts))
+	#print(compute_cut(cuts))
 	return compute_cut(cuts)
 
 
-_,_,_,_,cuts = construct_simplex(2/5)
+#_,_,_,_,cuts = construct_simplex(2/5)
 
 alpha = 1/3
 V,T,S,C, trims = construct_simplex(alpha)
 # Jafar: Use trims for a candidate cut for testing purposes.
-print(compute_cut([trim.plane for trim in trims]))
+#print(compute_cut([trim.plane for trim in trims]))
+#init = [x for cut in cuts for x in cut.plane.general_form()]
+init = [3,-2,4,4,-1,-2,5,3.5,2,1,-3,3,-4,0,-5,2]
+#print(init)
+#res = minimize(KCut, init)
 
-init = [x for cut in cuts for x in cut.plane.general_form()]
-res = minimize(KCut, init)
-
-print(res)
+#print(res)
 
 r = Renderer(backend='matplotlib')
 r.add((T,'r',1),normal_length=0)
-for s in S:
-	r.add((s,'b',2),normal_length=0)
-r.add((C,'g',3),normal_length=0)
+#for s in S:
+#	r.add((s,'b',2),normal_length=0)
+#r.add((C,'g',3),normal_length=0)
 
-data = res.x
+#data = res.x
+data = [3,-2,4,4,-1,-2,5,3.5,2,1,-3,3,-4,0,-5,2]
 opt_cut_data = [*zip(data[::4], data[1::4], data[2::4], data[3::4])]
 opt_cuts = [Plane(*val) for val in opt_cut_data]
 print(compute_cut(opt_cuts))
-for cut in opt_cuts:
-	r.add((intersection(cut, T), 'black',5),normal_length=0)
+#for cut in opt_cuts:
+#	r.add((intersection(cut, T), 'black',5),normal_length=0)
+#print(opt_cuts[1])
+#print(opt_cuts[1].general_form())
+r.add((intersection(opt_cuts[0],T), 'black',3), normal_length=0)
+r.add((intersection(opt_cuts[1],T), 'red',3), normal_length=0)
+r.add((intersection(opt_cuts[2],T), 'green',3), normal_length=0)
+r.add((intersection(opt_cuts[3],T), 'blue',3), normal_length=0)
 r.show()
