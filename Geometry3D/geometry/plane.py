@@ -100,6 +100,8 @@ class Plane(GeoBody):
         the plane.
         """
         if isinstance(other, Point):
+            #print(abs(other.pv() * self.n - self.p.pv() * self.n))
+            #print(get_eps())
             return abs(other.pv() * self.n - self.p.pv() * self.n) < get_eps()
         elif isinstance(other, Line):
             return Point(other.sv) in self and self.parallel(other)

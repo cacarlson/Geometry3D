@@ -58,7 +58,9 @@ def compute_cut(cuts):
 		if not isinstance(T_active, ConvexPolyhedron):
 			raise TypeError("We should consider the case when T_active is not a polyhedron.")
 		pol = intersection(c,T_active)		# pol is a polygon that cuts the "uncut" portion of the simplex T
-		if not isinstance(pol,ConvexPolygon):
+		# if (isinstance(pol,ConvexPolygon)):
+		# 	print("Area: ", pol.area())
+		if (not isinstance(pol,ConvexPolygon)) or pol.area() < .001:
 			cut_cost += 10000 #hack!
 			continue			# we should be careful with this case
 		cut_cost += grid_edges_cost(pol)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
@@ -91,6 +93,8 @@ def corner_edges_cost(a):
 	# a is guaranteed to be a convex polygon
 	corner_cost = float()
 	for i,s in enumerate(S):
+		#print(a)
+		#print(s)
 		a_corner = intersection(a, s)		# portion of a that contributes to corner edges' cost related to s
 		# TODO: What if None?
 		if not isinstance(a_corner, ConvexPolygon):

@@ -487,15 +487,15 @@ def inter_plane_convexpolygon(a,b):
         return b
 
     inter_p_cpg = intersection(a,b.plane)
-    print("Finding Inter of: ", inter_p_cpg)
+    #print("Finding Inter of: ", inter_p_cpg)
 
     if inter_p_cpg is None:
         return None
     elif isinstance(inter_p_cpg,Plane):
-        print("Returned: ", inter_p_cpg)
+        #print("Returned: ", inter_p_cpg)
         return b
     elif isinstance(inter_p_cpg,Line):
-        print("Returned: ", intersection(inter_p_cpg,b))
+        #print("Returned: ", intersection(inter_p_cpg,b))
         return intersection(inter_p_cpg,b)
     else:
         raise TypeError("Bug detected! please contact the author")
@@ -561,6 +561,7 @@ def inter_segment_segment(a,b):
     Output:
     The intersection
     '''
+    #print(a,b)
     if a.line == b.line:
         point_set = set()
         if a.start_point in b:
@@ -579,6 +580,7 @@ def inter_segment_segment(a,b):
         elif len(point_set) == 2:
             return Segment(point_list[0],point_list[1])
         else:
+            #print(point_set)
             raise TypeError("Bug detected! please contact the author")
     else:
         inter_l_l = intersection(a.line,b.line)
@@ -725,6 +727,7 @@ def inter_convexpolygon_convexpolygon(a,b):
             return Segment(point_tuple[0],point_tuple[1])
         else:
             if points_in_a_line(point_tuple):
+                #rint(point_tuple)
                 raise TypeError("Bug detected! please contact the author")
             return ConvexPolygon(point_tuple,check_convex=True)
 
@@ -993,7 +996,7 @@ def inter_convexpolygon_halfspace(cpg,h):
     #r.add((h.plane,'b',2),normal_length=0)
     inter_cpg_pl = intersection(cpg, h.plane)
 
-    print("Inter: ", inter_cpg_pl)
+    #print("Inter: ", inter_cpg_pl)
 
     # could add same points again but not a big deal
     if isinstance(inter_cpg_pl, Point):
@@ -1029,12 +1032,12 @@ def inter_convexpolyhedron_halfspace(cph, h):
     for face in cph.convex_polygons:
         if face in h.plane:
             return face
-        print("Inter Face: ", face, h)
+        #print("Inter Face: ", face, h)
         inter_f_h = intersection(face, h)
         if isinstance(inter_f_h, ConvexPolygon):
             inter_faces.add(inter_f_h)
 
-    print("Inter Plane: ", cph, h.plane)
+    #print("Inter Plane: ", cph, h.plane)
     inter_cph_pl = intersection(cph, h.plane)
 
     if inter_cph_pl is None or isinstance(inter_cph_pl, Point) or isinstance(inter_cph_pl, Segment):
@@ -1043,7 +1046,7 @@ def inter_convexpolyhedron_halfspace(cph, h):
         inter_faces.add(inter_cph_pl)
         return ConvexPolyhedron(tuple(inter_faces))
     else:
-        print("what?")
+        #print("what?")
         raise TypeError("Bug detected! please contact the author")
 
 __all__=('intersection',)

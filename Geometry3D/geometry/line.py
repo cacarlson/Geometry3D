@@ -7,16 +7,16 @@ from ..utils.constant import *
 class Line(GeoBody):
     """
     - Line(Point, Point):
-    
+
     A Line going through both given points.
 
     - Line(Point, Vector):
-    
+
     A Line going through the given point, in the direction pointed
     by the given Vector.
 
     - Line(Vector, Vector):
-    
+
     The same as Line(Point, Vector), but with instead of the point
     only the position vector of the point is given.
     """
@@ -25,7 +25,7 @@ class Line(GeoBody):
     def x_axis(cls):
         """return x axis which is a Line"""
         return cls(origin(),Point(1,0,0))
-    
+
     @classmethod
     def y_axis(cls):
         """return y axis which is a Line"""
@@ -35,7 +35,7 @@ class Line(GeoBody):
     def z_axis(cls):
         """return z axis which is a Line"""
         return cls(origin(),Point(0,0,1))
-    
+
     def __init__(self, a, b):
         # We're storing the position vector, so if a point is given we
         # need to convert it first
@@ -61,6 +61,8 @@ class Line(GeoBody):
         """Checks if a object lies on a line"""
         if isinstance(other,Point):
             v = other.pv() - self.sv
+            #print(v)
+            #print(self.dv)
             return v.parallel(self.dv)
         elif other.class_level > self.class_level:
             return other.in_(self)
@@ -81,7 +83,7 @@ class Line(GeoBody):
         round(self.dv[1],SIG_FIGURES),
         round(self.dv[0] * self.sv[1] - self.dv[1] * self.sv[0],SIG_FIGURES)
         ))
-    
+
     def move(self, v):
         """Return the line that you get when you move self by vector v, self is also moved"""
         if isinstance(v,Vector):

@@ -13,9 +13,9 @@ def volume(arg):
     **Output:**
 
     Returns the object volume. This includes
-    
+
     - Pyramid
-    
+
     - ConvexPolyhedron
     """
     if isinstance(arg,Pyramid):
@@ -27,6 +27,7 @@ def volume(arg):
             total_volume += volume(pyramid)
         return total_volume
     else:
+        print("Object: ", arg)
         raise ValueError("No attribut volume for this object")
 
 __all__=('volume',)
