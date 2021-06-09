@@ -697,6 +697,10 @@ def inter_convexpolygon_convexpolygon(a,b):
     The intersection
     '''
     inter_p_p = intersection(a.plane,b.plane)
+    r = Renderer(backend='matplotlib')
+    r.add((a,'r',2),normal_length=0)
+    r.add((b,'g',10),normal_length=0)
+
     if inter_p_p is None:
         return None
     elif isinstance(inter_p_p,Line):
@@ -728,6 +732,12 @@ def inter_convexpolygon_convexpolygon(a,b):
         else:
             if points_in_a_line(point_tuple):
                 #rint(point_tuple)
+                print(point_tuple)
+                for s in point_tuple:
+                	r.add((s,'b',20),normal_length=0)
+
+                print(b)
+                r.show()
                 raise TypeError("Bug detected! please contact the author")
             return ConvexPolygon(point_tuple,check_convex=True)
 

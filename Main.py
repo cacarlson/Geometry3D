@@ -24,7 +24,7 @@ set_eps(1e-10)
 _,_,_,_,cuts = construct_simplex(3/4)
 
 alpha = 1/3
-V,T,S,C, trims = construct_simplex(alpha)
+V,T,S,C,trims = construct_simplex(alpha)
 # Jafar: Use trims for a candidate cut for testing purposes.
 # print(compute_cut([trim.plane for trim in trims]))
 # r = Renderer(backend='matplotlib')
@@ -39,7 +39,10 @@ V,T,S,C, trims = construct_simplex(alpha)
 
 init = [x for cut in cuts for x in cut.plane.general_form()]
 
-#init = [3,-2,4,4,-1,-2,5,3.5,2,1,-3,3,-4,0,-5,2]
+#init = [3,-2,4,4,
+#		-1,-2,5,3.5,
+#		2,1,-3,3,
+#		-4,0,-5,2]
 #init = [ 2.8678988,  -2.0673227,   3.67714101,  4.38827445, -0.87509477, -1.72442337,
  # 			4.37484964,  4.5028203,   1.86045445,  1.07570424, -2.64171212,  3.42644829,
  #			-3.89068623,  0.41426979, -4.7023626,   2.85373303]
@@ -65,6 +68,7 @@ for cut in init_cuts:
 	print(cut)
 	r.add((intersection(cut, T), 'black',5),normal_length=0)
 r.show()
+
 res = minimize(KCut, init)
 
 print(res)

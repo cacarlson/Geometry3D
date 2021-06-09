@@ -19,9 +19,14 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 		raise TypeError("Incorrect Input")
 	pol = intersection(a,b)
 	# pol is a convex polygon which has attributes such as its vertices and the plane it belongs to
+
+	# pol could be nothing, point or line (if it isn't a polygon)
+	# if this is the case, then either the intersection is pol or it is b
 	if not isinstance(pol, ConvexPolygon):		# check if pol is a polygon or not
-			print("No cut ocurred!")		# we should be careful with this case
+		cp = b._get_center_point()
+		if ((cp.pv() - a.p.pv())*a.n) > 0:
 			return b
+		return pol
 	s = Segment(pol.points[0], pol.points[1])					# first segment (edge) of pol
 	c = pol.plane.n.cross(s.line.dv)							# vector parallel to a side of the cube on its certain face
 	# Here pol.plane is the plane that pol belongs to and pol.plane.n is its unit normal vector
@@ -57,16 +62,36 @@ def compute_cut(cuts):
 	for i,c in enumerate(cuts):
 		if not isinstance(T_active, ConvexPolyhedron):
 			raise TypeError("We should consider the case when T_active is not a polyhedron.")
+
 		pol = intersection(c,T_active)		# pol is a polygon that cuts the "uncut" portion of the simplex T
 		# if (isinstance(pol,ConvexPolygon)):
 		# 	print("Area: ", pol.area())
-		if (not isinstance(pol,ConvexPolygon)) or pol.area() < .001:
-			cut_cost += 10000 #hack!
-			continue			# we should be careful with this case
+		if not isinstance(pol,ConvexPolygon):
+			continue
+
+		# lets compute max point distance in pol
+		mx_seg = 0
+
+		for segs in pol.segments():
+			mx_seg = max(mx_seg, segs.length())
+
+		print("Area: ", pol.area(), print("Max Length: ", mx_seg))
+		if mx_seg < .001:
+			continue	# we should be careful with this case
+						# Note that we aren't adjusting T_active but the only way this should
+						# come up is if we are removing a small volume which shouldn't be the case
+
 		cut_cost += grid_edges_cost(pol)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
 		cut_cost += corner_edges_cost(pol)		# compute the contribution of the corner edges to the cost of a cut
 		# T_active = intersect(HalfSpace(c), T_active)
 		T_active = inter_halfspace_convexpolyhedron(c,T_active,V[i])
+
+	# check if valid cut
+	#edges = [(u, v) for idx, u in enumerate(V) for v in V[idx + 1:]]
+
+	for seg in T.segment_set:
+		if seg in T_active:
+			return Integer.MAX_VALUE
 	return cut_cost
 
 def grid_edges_cost(a):
@@ -115,7 +140,7 @@ def corner_edges_cost(a):
 			# Note to Charlie: This should nto happen either
 			raise ValueError("To build a polygon the number of points cannot be less than 3")		# The case when projection of a_corner on face_i is not a polygon.
 		proj_cut = ConvexPolygon(tuple(proj_vertices))
-		corner_cost += proj_cut.area() * math.sqrt(3) / 2	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
+		corner_cost += (2)*(proj_cut.area() * math.sqrt(3) / 2)	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
 		#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
 		# cost of face_i should be the same as moving it a little above
 		# area of trianlge times sum of unit vectors times unit vectors
