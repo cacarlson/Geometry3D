@@ -2,6 +2,7 @@ import math
 import copy
 import itertools
 from Geometry3D import *
+import matplotlib.pyplot as plt
 
 def inter_halfspace_convexpolyhedron(a,b,v):
 	'''
@@ -46,7 +47,13 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 	f4 = ConvexPolygon([v3, v4, u3, u4])
 	f5 = ConvexPolygon([u1, u3, v1, v3])
 	f6 = ConvexPolygon([v2, v4, u2, u4])
+
 	box = ConvexPolyhedron([f1, f2, f3, f4, f5, f6])		# cube that mimics the halfspace
+
+	# r = Renderer(backend='matplotlib')
+	# r.add((b,'r',1),normal_length=0)
+	# r.add((box,'b',1),normal_length=0)
+	# r.show()
 	return intersection(box, b)		# return the intersection
 
 def compute_cut(cuts):
@@ -59,9 +66,16 @@ def compute_cut(cuts):
 
 	T_active = copy.deepcopy(T)		# This is the copy of the simplex that we will work with.
 	cut_cost = float()				# cut cost is initially zero.
+	grid_cost = float()
+	corner_cost = float()
 	for i,c in enumerate(cuts):
 		if not isinstance(T_active, ConvexPolyhedron):
 			raise TypeError("We should consider the case when T_active is not a polyhedron.")
+
+		# r = Renderer(backend='matplotlib')
+		# #r.add((c,'r',1),normal_length=0)
+		# r.add((T_active,'b',1),normal_length=0)
+		# r.show()
 
 		pol = intersection(c,T_active)		# pol is a polygon that cuts the "uncut" portion of the simplex T
 		# if (isinstance(pol,ConvexPolygon)):
@@ -75,14 +89,14 @@ def compute_cut(cuts):
 		for segs in pol.segments():
 			mx_seg = max(mx_seg, segs.length())
 
-		print("Area: ", pol.area(), print("Max Length: ", mx_seg))
+		#print("Area: ", pol.area(), print("Max Length: ", mx_seg))
 		if mx_seg < .001:
 			continue	# we should be careful with this case
 						# Note that we aren't adjusting T_active but the only way this should
 						# come up is if we are removing a small volume which shouldn't be the case
 
-		cut_cost += grid_edges_cost(pol)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
-		cut_cost += corner_edges_cost(pol)		# compute the contribution of the corner edges to the cost of a cut
+		grid_cost += grid_edges_cost(pol)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
+		corner_cost += corner_edges_cost(pol)		# compute the contribution of the corner edges to the cost of a cut
 		# T_active = intersect(HalfSpace(c), T_active)
 		T_active = inter_halfspace_convexpolyhedron(c,T_active,V[i])
 
@@ -92,7 +106,10 @@ def compute_cut(cuts):
 	for seg in T.segment_set:
 		if seg in T_active:
 			return Integer.MAX_VALUE
-	return cut_cost
+	print("Grid Cost: ", grid_cost)
+	print("Corner Cost: ", corner_cost)
+	print("Cut Cost: ", grid_cost + corner_cost)
+	return grid_cost + corner_cost, grid_cost, corner_cost
 
 def grid_edges_cost(a):
 	'''
@@ -100,15 +117,19 @@ def grid_edges_cost(a):
 	'''
 	# a is guaranteed to be a convex polygon
 	grid_cost = float()
+
 	a_grid = intersection(C, a)		# portion of a which contributes to grid edges' cost
+
 	if (a_grid == None):
+		#print ("Grid Cost: ", grid_cost)
 		return grid_cost
 	# check whether a_grid is a convex polygon.
 	for seg in T.segment_set:
 		# we don't have to multiply by side length (be consistent)
 		# LP cost depends on this choice
 		# Jafar: Removed seg.length() from the below product
-		grid_cost += a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
+		grid_cost += seg.length() * 2/3 * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
+
 	return grid_cost
 
 def corner_edges_cost(a):
@@ -140,13 +161,16 @@ def corner_edges_cost(a):
 			# Note to Charlie: This should nto happen either
 			raise ValueError("To build a polygon the number of points cannot be less than 3")		# The case when projection of a_corner on face_i is not a polygon.
 		proj_cut = ConvexPolygon(tuple(proj_vertices))
-		corner_cost += (2)*(proj_cut.area() * math.sqrt(3) / 2)	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
+		# This seems off:
+		#corner_cost += (2)*(proj_cut.area() * math.sqrt(3) / 2)	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
+		corner_cost += proj_cut.area() / face_i.area() * math.sqrt(3)
 		#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
 		# cost of face_i should be the same as moving it a little above
 		# area of trianlge times sum of unit vectors times unit vectors
 		# root(6)/2
 		# root(3)/2 * side length <-
 		# compute the contribution of corner edges incident to V[i]. We should also include a multiplicative constant.
+	#print("Corner Cost: ", corner_cost)
 	return corner_cost
 
 # The above libraries contain those that were used in the source code of the calc.intersection module

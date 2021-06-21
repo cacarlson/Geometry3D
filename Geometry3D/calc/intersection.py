@@ -732,12 +732,12 @@ def inter_convexpolygon_convexpolygon(a,b):
         else:
             if points_in_a_line(point_tuple):
                 #rint(point_tuple)
-                print(point_tuple)
-                for s in point_tuple:
-                	r.add((s,'b',20),normal_length=0)
-
-                print(b)
-                r.show()
+                # print(point_tuple)
+                # for s in point_tuple:
+                # 	r.add((s,'b',20),normal_length=0)
+                #
+                # print(b)
+                # r.show()
                 raise TypeError("Bug detected! please contact the author")
             return ConvexPolygon(point_tuple,check_convex=True)
 

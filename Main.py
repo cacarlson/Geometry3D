@@ -8,23 +8,22 @@ from scipy.optimize import minimize
 
 from intersect_halfspace_polyhedron import *
 
+import matplotlib.pyplot as plt
+
 # Globals .... okay for now
 def KCut(data):
 	cut_data = [*zip(data[::4], data[1::4], data[2::4], data[3::4])]
-	#print(cut_data)
 	cuts = [Plane(*val) for val in cut_data]
-	#print(cuts)
-	print(data)
-	print(compute_cut(cuts))
-	return compute_cut(cuts)
+
+	#print(data)
+	#print(compute_cut(cuts))
+
+
+	return compute_cut(cuts)[0]
 
 
 set_eps(1e-10)
 
-_,_,_,_,cuts = construct_simplex(3/4)
-
-alpha = 1/3
-V,T,S,C,trims = construct_simplex(alpha)
 # Jafar: Use trims for a candidate cut for testing purposes.
 # print(compute_cut([trim.plane for trim in trims]))
 # r = Renderer(backend='matplotlib')
@@ -37,7 +36,7 @@ V,T,S,C,trims = construct_simplex(alpha)
 # 	r.add((intersection(cut, T), 'black',5),normal_length=0)
 # r.show()
 
-init = [x for cut in cuts for x in cut.plane.general_form()]
+#init = [x for cut in cuts for x in cut.plane.general_form()]
 
 #init = [3,-2,4,4,
 #		-1,-2,5,3.5,
@@ -53,36 +52,60 @@ init = [x for cut in cuts for x in cut.plane.general_form()]
 #  	4.37484828,  4.50282188,  1.86045413,  1.07570371, -2.64171244,  3.42644778,
 # 	-3.8906908,   0.41427025, -4.70236062,  2.85373489]
 #rint(compute_cut([trim.plane for trim in trims]))
-init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
-init_cuts = [Plane(*val) for val in init_data]
+#init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
+#init_cuts = [Plane(*val) for val in init_data]
 
-print(compute_cut(init_cuts))
+alpha = 1/3
+cut_costs = []
+corner_costs = []
+grid_costs = []
+points = [alpha + off/6 for off in np.linspace(-.6,6/2-6/3-.01,20)]
+for beta in points:
 
-r = Renderer(backend='matplotlib')
-r.add((T,'r',1),normal_length=0)
-for s in S:
-	r.add((s,'b',2),normal_length=0)
-r.add((C,'g',3),normal_length=0)
+	_,_,_,_,cuts = construct_simplex(beta)
+	V,T,S,C,trims = construct_simplex(alpha)
 
-for cut in init_cuts:
-	print(cut)
-	r.add((intersection(cut, T), 'black',5),normal_length=0)
-r.show()
+	init = [x for cut in cuts for x in cut.plane.general_form()]
+	init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
+	init_cuts = [Plane(*val) for val in init_data]
 
-res = minimize(KCut, init)
+	print(beta)
+	cut_cost, grid_cost, corner_cost = compute_cut(init_cuts)
+	cut_costs.append(cut_cost) #/beta**2/3)
+	grid_costs.append(grid_cost)
+	corner_costs.append(corner_cost)
 
-print(res)
+	#print(compute_cut(init_cuts)/beta**2/3)
+plt.plot(points, cut_costs, 'r') # plotting t, a separately
+plt.plot(points, grid_costs, 'b') # plotting t, b separately
+plt.plot(points, corner_costs, 'g') # plotting t, c separately
+plt.show()
 
-r = Renderer(backend='matplotlib')
-r.add((T,'r',1),normal_length=0)
-for s in S:
-	r.add((s,'b',2),normal_length=0)
-r.add((C,'g',3),normal_length=0)
-
-data = res.x
-opt_cut_data = [*zip(data[::4], data[1::4], data[2::4], data[3::4])]
-opt_cuts = [Plane(*val) for val in opt_cut_data]
-print(compute_cut(opt_cuts))
-for cut in opt_cuts:
-	r.add((intersection(cut, T), 'black',5),normal_length=0)
-r.show()
+# r = Renderer(backend='matplotlib')
+# r.add((T,'r',1),normal_length=0)
+# for s in S:
+# 	r.add((s,'b',2),normal_length=0)
+# r.add((C,'g',3),normal_length=0)
+#
+# for cut in init_cuts:
+# 	print(cut)
+# 	r.add((intersection(cut, T), 'black',5),normal_length=0)
+# r.show()
+#
+# res = minimize(KCut, init)
+#
+# print(res)
+#
+# r = Renderer(backend='matplotlib')
+# r.add((T,'r',1),normal_length=0)
+# for s in S:
+# 	r.add((s,'b',2),normal_length=0)
+# r.add((C,'g',3),normal_length=0)
+#
+# data = res.x
+# opt_cut_data = [*zip(data[::4], data[1::4], data[2::4], data[3::4])]
+# opt_cuts = [Plane(*val) for val in opt_cut_data]
+# print(compute_cut(opt_cuts))
+# for cut in opt_cuts:
+# 	r.add((intersection(cut, T), 'black',5),normal_length=0)
+# r.show()

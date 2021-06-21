@@ -121,6 +121,7 @@ class ConvexPolygon(GeoBody):
         # merge same points
         points = copy.deepcopy(pts)
         self.points = sorted(set(points),key=points.index)
+        self.convex_check = check_convex
         #print(self.points)
         if len(points) < 3:
             raise ValueError('Cannot build a polygon with number of points smaller than 3')
@@ -208,7 +209,7 @@ class ConvexPolygon(GeoBody):
         v1 = the_normal.cross(v0)
         angle_point_dict = dict() # dict[angle] = Point
         for point in self.points:
-            if not point in self.plane:
+            if self.convex_check and not point in self.plane:
                 raise ValueError('Convex Check Fails Because {} Is Not On {}'.format(point,self.plane))
             pv = point.pv() - self.center_point.pv()
             y_coordinate = pv * v0

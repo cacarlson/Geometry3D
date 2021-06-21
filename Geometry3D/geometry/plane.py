@@ -6,6 +6,7 @@ from .line import Line
 from ..utils.solver import solve
 from ..utils.vector import Vector,x_unit_vector,y_unit_vector,z_unit_vector
 from ..utils.constant import *
+
 class Plane(GeoBody):
     """
     - Plane(Point, Point, Point):
@@ -102,6 +103,7 @@ class Plane(GeoBody):
         if isinstance(other, Point):
             #print(abs(other.pv() * self.n - self.p.pv() * self.n))
             #print(get_eps())
+            #print(abs(other.pv() * self.n - self.p.pv() * self.n))
             return abs(other.pv() * self.n - self.p.pv() * self.n) < get_eps()
         elif isinstance(other, Line):
             return Point(other.sv) in self and self.parallel(other)
