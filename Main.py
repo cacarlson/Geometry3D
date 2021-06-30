@@ -11,30 +11,124 @@ from intersect_halfspace_polyhedron import *
 import matplotlib.pyplot as plt
 
 # Globals .... okay for now
+# T is the simplex that we want to cut.
+T = None
+# V is the list of vertices of T so that V[i] = vertex i of T.
+V = None
+# S is the list of top simplices such that S[i] is the top simplex related to V[i] for i in {1,2,3,4}.
+S = None
+# C is region of T \ union_of_(S[1], S[2], S[3], S[4]).
+C = None
+# trim is the planes of the top simplex regions
+trims = None
+alpha = 0
+
 def KCut(data):
 	cut_data = [*zip(data[::4], data[1::4], data[2::4], data[3::4])]
 	cuts = [Plane(*val) for val in cut_data]
+	costs = compute_cut(cuts, T, V, S, C)
 
-	#print(data)
-	#print(compute_cut(cuts))
+	print("Corner Cost: ", costs[2])
+	print("Grid Cost: ", costs[1])
+	print("Cost: ", costs[0])
+	return costs[0]
 
+def CheckSimpleCuts(debug = False):
+	cut_costs = []
+	corner_costs = []
+	grid_costs = []
+	points = [alpha + off/6 for off in np.linspace(-.6,6/2-6/3-.01,20)]
 
-	return compute_cut(cuts)[0]
+	for beta in points:
+
+		_,_,_,_,cuts = construct_simplex(beta)
+		#V,T,S,C,trims = construct_simplex(alpha)
+
+		init = [x for cut in cuts for x in cut.plane.general_form()]
+		init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
+		init_cuts = [Plane(*val) for val in init_data]
+
+		print(beta)
+		cut_cost, grid_cost, corner_cost = compute_cut(init_cuts,T,V,S,C)
+
+		if debug:
+			print("Corner Cost: ", corner_cost)
+			print("Grid Cost: ", grid_cost)
+			print("Cost: ", cut_cost)
+
+		cut_costs.append(cut_cost)
+		grid_costs.append(grid_cost)
+		corner_costs.append(corner_cost)
+
+	plt.plot(points, cut_costs, 'r') # plotting t, a separately
+	plt.plot(points, grid_costs, 'b') # plotting t, b separately
+	plt.plot(points, corner_costs, 'g') # plotting t, c separately
+	plt.show()
+
+def DrawSimplex(cuts = []):
+	r = Renderer(backend='matplotlib')
+
+	r.add((T,'r',1),normal_length=0)
+	for s in S:
+		r.add((s,'b',2),normal_length=0)
+	r.add((C,'g',3),normal_length=0)
+
+	for cut in cuts:
+		r.add((intersection(cut, T), 'black',5),normal_length=0)
+	r.show()
+
+def OptimizeCut(init = None, debug = False):
+	# init_data is list of
+	if init == None:
+		_,_,_,_,cuts = construct_simplex(alpha)
+		init = [x for cut in cuts for x in cut.plane.general_form()]
+
+		# init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
+		# init_cuts = [Plane(*val) for val in init_data]
+	KCut(init)
+	return minimize(KCut, init)
+
+def main():
+	global V, T, C, S, trims, alpha
+
+	alpha = 1/3
+	V,T,S,C,trims = construct_simplex(alpha)
+
+	# DrawSimplex()
+	# CheckSimpleCuts(True)
+	_,_,_,_,cuts = construct_simplex(1/3+.01)
+	init = [x for cut in cuts for x in cut.plane.general_form()]
+	KCut(init)
+	#init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
+	#init_cuts = [Plane(*val) for val in init_data]
+
+	res = OptimizeCut(init, True)
+
+	r = Renderer(backend='matplotlib')
+	r.add((T,'r',1),normal_length=0)
+	for s in S:
+		r.add((s,'b',2),normal_length=0)
+	r.add((C,'g',3),normal_length=0)
+
+	data = res.x
+	opt_cut_data = [*zip(data[::4], data[1::4], data[2::4], data[3::4])]
+	opt_cuts = [Plane(*val) for val in opt_cut_data]
+
+	print("Opt Cut Cost: ", res)
+	print("Opt Cut: ", compute_cut(opt_cuts, T, V, S, C))
+
+	for cut in opt_cuts:
+		r.add((intersection(cut, T), 'black',5),normal_length=0)
+	r.show()
 
 
 set_eps(1e-10)
+if __name__ == "__main__":
+    main()
 
 # Jafar: Use trims for a candidate cut for testing purposes.
 # print(compute_cut([trim.plane for trim in trims]))
-# r = Renderer(backend='matplotlib')
-# r.add((T,'r',1),normal_length=0)
-# for s in S:
-# 	r.add((s,'b',2),normal_length=0)
-# r.add((C,'g',3),normal_length=0)
-#
-# for cut in cuts:
-# 	r.add((intersection(cut, T), 'black',5),normal_length=0)
-# r.show()
+
 
 #init = [x for cut in cuts for x in cut.plane.general_form()]
 
@@ -55,31 +149,7 @@ set_eps(1e-10)
 #init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
 #init_cuts = [Plane(*val) for val in init_data]
 
-alpha = 1/3
-cut_costs = []
-corner_costs = []
-grid_costs = []
-points = [alpha + off/6 for off in np.linspace(-.6,6/2-6/3-.01,20)]
-for beta in points:
 
-	_,_,_,_,cuts = construct_simplex(beta)
-	V,T,S,C,trims = construct_simplex(alpha)
-
-	init = [x for cut in cuts for x in cut.plane.general_form()]
-	init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
-	init_cuts = [Plane(*val) for val in init_data]
-
-	print(beta)
-	cut_cost, grid_cost, corner_cost = compute_cut(init_cuts)
-	cut_costs.append(cut_cost) #/beta**2/3)
-	grid_costs.append(grid_cost)
-	corner_costs.append(corner_cost)
-
-	#print(compute_cut(init_cuts)/beta**2/3)
-plt.plot(points, cut_costs, 'r') # plotting t, a separately
-plt.plot(points, grid_costs, 'b') # plotting t, b separately
-plt.plot(points, corner_costs, 'g') # plotting t, c separately
-plt.show()
 
 # r = Renderer(backend='matplotlib')
 # r.add((T,'r',1),normal_length=0)
