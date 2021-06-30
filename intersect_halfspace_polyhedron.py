@@ -56,12 +56,12 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 	# r.show()
 	return intersection(box, b)		# return the intersection
 
-def compute_cut(cuts):
+def compute_cut(cuts, T, V, S, C):
 	# T is the simplex that we want to cut.
 	# V is the list of vertices of T so that V[i] = vertex i of T.
 	# S is the list of top simplices such that S[i] is the top simplex related to V[i] for i in {1,2,3,4}.
 	# C is region of T \ union_of_(S[1], S[2], S[3], S[4]).
-	# Here I assume these objects have already been defined globally.
+	# No: Here I assume these objects have already been defined globally.
 	# cuts is a list of hyperplanes ordered so that cuts[i] cuts V[i].
 
 	T_active = copy.deepcopy(T)		# This is the copy of the simplex that we will work with.
@@ -95,8 +95,8 @@ def compute_cut(cuts):
 						# Note that we aren't adjusting T_active but the only way this should
 						# come up is if we are removing a small volume which shouldn't be the case
 
-		grid_cost += grid_edges_cost(pol)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
-		corner_cost += corner_edges_cost(pol)		# compute the contribution of the corner edges to the cost of a cut
+		grid_cost += grid_edges_cost(pol, T, C)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
+		corner_cost += corner_edges_cost(pol, S, V)		# compute the contribution of the corner edges to the cost of a cut
 		# T_active = intersect(HalfSpace(c), T_active)
 		T_active = inter_halfspace_convexpolyhedron(c,T_active,V[i])
 
@@ -105,13 +105,13 @@ def compute_cut(cuts):
 
 	for seg in T.segment_set:
 		if seg in T_active:
-			return Integer.MAX_VALUE
-	print("Grid Cost: ", grid_cost)
-	print("Corner Cost: ", corner_cost)
-	print("Cut Cost: ", grid_cost + corner_cost)
+			return 10000, 10000, 10000 #float('inf'), float('inf'), float('inf')
+	# print("Grid Cost: ", grid_cost)
+	# print("Corner Cost: ", corner_cost)
+	# print("Cut Cost: ", grid_cost + corner_cost)
 	return grid_cost + corner_cost, grid_cost, corner_cost
 
-def grid_edges_cost(a):
+def grid_edges_cost(a, T, C):
 	'''
 	Compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
 	'''
@@ -128,11 +128,12 @@ def grid_edges_cost(a):
 		# we don't have to multiply by side length (be consistent)
 		# LP cost depends on this choice
 		# Jafar: Removed seg.length() from the below product
-		grid_cost += seg.length() * 2/3 * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
+		#grid_cost += seg.length() * 2/3 * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
+		grid_cost += 1/3 * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
 
 	return grid_cost
 
-def corner_edges_cost(a):
+def corner_edges_cost(a, S, V):
 	'''
 	Compute the contribution of the corner edges to the cost of a cut
 	'''
@@ -163,7 +164,7 @@ def corner_edges_cost(a):
 		proj_cut = ConvexPolygon(tuple(proj_vertices))
 		# This seems off:
 		#corner_cost += (2)*(proj_cut.area() * math.sqrt(3) / 2)	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
-		corner_cost += proj_cut.area() / face_i.area() * math.sqrt(3)
+		corner_cost += proj_cut.area() * math.sqrt(3) /2 #/3
 		#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
 		# cost of face_i should be the same as moving it a little above
 		# area of trianlge times sum of unit vectors times unit vectors
@@ -177,7 +178,7 @@ def corner_edges_cost(a):
 
 def construct_simplex(a):
 	# The above libraries contain those that were used in the source code of the calc.intersection module
-	global V, T, C, S 	# Jafar: These variables are accessed by compute_cut(), grid_edges_cost(), corner_edges_cost() functions.
+	#global V, T, C, S, trims	# Jafar: These variables are accessed by compute_cut(), grid_edges_cost(), corner_edges_cost() functions.
 	# Setup the instance
 	v1, v2, v3, v4 = Point(1,1,1), Point(-1,-1,1), Point(1,-1,-1), Point(-1,1,-1)	# Vertices of the simplex T ??
 	V = [v1, v2, v3, v4]														# V is the list of vertices of T so that V[i] = vi of T.
