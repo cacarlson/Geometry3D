@@ -128,8 +128,8 @@ def grid_edges_cost(a, T, C):
 		# we don't have to multiply by side length (be consistent)
 		# LP cost depends on this choice
 		# Jafar: Removed seg.length() from the below product
-		#grid_cost += seg.length() * 2/3 * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
-		grid_cost += 1/3 * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
+		grid_cost += (1/8) * seg.length() * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
+		#grid_cost += 1/3 * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
 
 	return grid_cost
 
@@ -139,6 +139,7 @@ def corner_edges_cost(a, S, V):
 	'''
 	# a is guaranteed to be a convex polygon
 	corner_cost = float()
+	penalty = 0
 	for i,s in enumerate(S):
 		#print(a)
 		#print(s)
@@ -153,18 +154,22 @@ def corner_edges_cost(a, S, V):
 										# This is the set of vertices of a projection of a_corner on face_i
 		for p in a_corner.points:
 			# We need to make sure that p is not equal to V[i] otherwise Line() function below will raise a value error.
-			proj_vertex = intersection(Line(V[i], p),face_i)	# This is the "projection" of p on face_i
+			dist = distance(V[i], p)
+			if dist < 1/30:
+				penalty += 100 * (1/30 - dist)
+			proj_vertex = intersection(Line(V[i], p),face_i)	# This is the "projection" of p on face_i			
 			if not isinstance(proj_vertex, Point):
 				# Note to Charlie: This should not happen so error works
 				raise TypeError("Intersection is not a point.")				# We need to check whether p is of type Point.
 			proj_vertices.add(proj_vertex)
 		if len(proj_vertices) < 3:
-			# Note to Charlie: This should nto happen either
+			# Note to Charlie: This should not happen either
 			raise ValueError("To build a polygon the number of points cannot be less than 3")		# The case when projection of a_corner on face_i is not a polygon.
 		proj_cut = ConvexPolygon(tuple(proj_vertices))
 		# This seems off:
 		#corner_cost += (2)*(proj_cut.area() * math.sqrt(3) / 2)	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
-		corner_cost += proj_cut.area() * math.sqrt(3) /2 #/3
+		corner_cost += proj_cut.area() * math.sqrt(3) /2 + penalty
+
 		#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
 		# cost of face_i should be the same as moving it a little above
 		# area of trianlge times sum of unit vectors times unit vectors
