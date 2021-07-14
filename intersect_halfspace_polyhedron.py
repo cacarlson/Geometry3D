@@ -57,6 +57,24 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 	return intersection(box, b)		# return the intersection
 
 def compute_cut(cuts, T, V, S, C):
+	return penality(cuts, T, V) * (compute_3d_cost(cuts, T, V, S, C) + compute_2d_cost() + compute_1d_cost())
+
+def penality(cuts, T, V):
+	pen = 0
+
+	for seg in T.segment_set:
+		for cut in cuts:
+			if not isinstance(intersection(seg, cut), Point):
+				pen = 2**(3)
+
+	for v in V:
+		min_d = 1/3
+		for cut in cuts:
+			min_d = min(min_d, 1/3-distance(v,cut))
+		pen = max(pen, 2**(9*(1/3-min_d)))
+	return 1
+
+def compute_3d_cost(cuts, T, V, S, C):
 	# T is the simplex that we want to cut.
 	# V is the list of vertices of T so that V[i] = vertex i of T.
 	# S is the list of top simplices such that S[i] is the top simplex related to V[i] for i in {1,2,3,4}.
@@ -100,16 +118,7 @@ def compute_cut(cuts, T, V, S, C):
 		# T_active = intersect(HalfSpace(c), T_active)
 		T_active = inter_halfspace_convexpolyhedron(c,T_active,V[i])
 
-	# check if valid cut
-	#edges = [(u, v) for idx, u in enumerate(V) for v in V[idx + 1:]]
-
-	for seg in T.segment_set:
-		if seg in T_active:
-			return 10000, 10000, 10000 #float('inf'), float('inf'), float('inf')
-	# print("Grid Cost: ", grid_cost)
-	# print("Corner Cost: ", corner_cost)
-	# print("Cut Cost: ", grid_cost + corner_cost)
-	return grid_cost + corner_cost, grid_cost, corner_cost
+	return grid_cost + corner_cost
 
 def grid_edges_cost(a, T, C):
 	'''
@@ -154,10 +163,10 @@ def corner_edges_cost(a, S, V):
 										# This is the set of vertices of a projection of a_corner on face_i
 		for p in a_corner.points:
 			# We need to make sure that p is not equal to V[i] otherwise Line() function below will raise a value error.
-			dist = distance(V[i], p)
-			if dist < 1/30:
-				penalty += 100 * (1/30 - dist)
-			proj_vertex = intersection(Line(V[i], p),face_i)	# This is the "projection" of p on face_i			
+			# dist = distance(V[i], p)
+			# if dist < 1/30:
+			# 	penalty += 100 * (1/30 - dist)
+			proj_vertex = intersection(Line(V[i], p),face_i)	# This is the "projection" of p on face_i
 			if not isinstance(proj_vertex, Point):
 				# Note to Charlie: This should not happen so error works
 				raise TypeError("Intersection is not a point.")				# We need to check whether p is of type Point.
@@ -168,7 +177,7 @@ def corner_edges_cost(a, S, V):
 		proj_cut = ConvexPolygon(tuple(proj_vertices))
 		# This seems off:
 		#corner_cost += (2)*(proj_cut.area() * math.sqrt(3) / 2)	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
-		corner_cost += proj_cut.area() * math.sqrt(3) /2 + penalty
+		corner_cost += proj_cut.area() * math.sqrt(3) /2 # + penalty
 
 		#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
 		# cost of face_i should be the same as moving it a little above
@@ -177,10 +186,16 @@ def corner_edges_cost(a, S, V):
 		# root(3)/2 * side length <-
 		# compute the contribution of corner edges incident to V[i]. We should also include a multiplicative constant.
 	#print("Corner Cost: ", corner_cost)
+
 	return corner_cost
 
-# The above libraries contain those that were used in the source code of the calc.intersection module
+def compute_2d_cost():
+	return 0
 
+def compute_1d_cost():
+	return 0
+
+# Add 1D cost function for each edge
 def construct_simplex(a):
 	# The above libraries contain those that were used in the source code of the calc.intersection module
 	#global V, T, C, S, trims	# Jafar: These variables are accessed by compute_cut(), grid_edges_cost(), corner_edges_cost() functions.

@@ -49,20 +49,20 @@ def CheckSimpleCuts(debug = False):
 		init_cuts = [Plane(*val) for val in init_data]
 
 		print(beta)
-		cut_cost, grid_cost, corner_cost = compute_cut(init_cuts,T,V,S,C)
+		cut_cost = compute_cut(init_cuts,T,V,S,C)
 
 		if debug:
-			print("Corner Cost: ", corner_cost)
-			print("Grid Cost: ", grid_cost)
+			# print("Corner Cost: ", corner_cost)
+			# print("Grid Cost: ", grid_cost)
 			print("Cost: ", cut_cost)
 
 		cut_costs.append(cut_cost)
-		grid_costs.append(grid_cost)
-		corner_costs.append(corner_cost)
+		# grid_costs.append(grid_cost)
+		# corner_costs.append(corner_cost)
 
 	plt.plot(points, cut_costs, 'r') # plotting t, a separately
-	plt.plot(points, grid_costs, 'b') # plotting t, b separately
-	plt.plot(points, corner_costs, 'g') # plotting t, c separately
+	# plt.plot(points, grid_costs, 'b') # plotting t, b separately
+	# plt.plot(points, corner_costs, 'g') # plotting t, c separately
 	plt.show()
 
 def DrawSimplex(cuts = []):
@@ -95,31 +95,31 @@ def main():
 	V,T,S,C,trims = construct_simplex(alpha)
 
 	# DrawSimplex()
-	# CheckSimpleCuts(True)
-	_,_,_,_,cuts = construct_simplex(1/3+.01)
-	init = [x for cut in cuts for x in cut.plane.general_form()]
-	KCut(init)
-	#init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
-	#init_cuts = [Plane(*val) for val in init_data]
-
-	res = OptimizeCut(init, True)
-
-	r = Renderer(backend='matplotlib')
-	r.add((T,'r',1),normal_length=0)
-	for s in S:
-		r.add((s,'b',2),normal_length=0)
-	r.add((C,'g',3),normal_length=0)
-
-	data = res.x
-	opt_cut_data = [*zip(data[::4], data[1::4], data[2::4], data[3::4])]
-	opt_cuts = [Plane(*val) for val in opt_cut_data]
-
-	print("Opt Cut Cost: ", res)
-	print("Opt Cut: ", compute_cut(opt_cuts, T, V, S, C))
-
-	for cut in opt_cuts:
-		r.add((intersection(cut, T), 'black',5),normal_length=0)
-	r.show()
+	CheckSimpleCuts(True)
+	# _,_,_,_,cuts = construct_simplex(1/3+.01)
+	# init = [x for cut in cuts for x in cut.plane.general_form()]
+	# KCut(init)
+	# #init_data = [*zip(init[::4], init[1::4], init[2::4], init[3::4])]
+	# #init_cuts = [Plane(*val) for val in init_data]
+	#
+	# res = OptimizeCut(init, True)
+	#
+	# r = Renderer(backend='matplotlib')
+	# r.add((T,'r',1),normal_length=0)
+	# for s in S:
+	# 	r.add((s,'b',2),normal_length=0)
+	# r.add((C,'g',3),normal_length=0)
+	#
+	# data = res.x
+	# opt_cut_data = [*zip(data[::4], data[1::4], data[2::4], data[3::4])]
+	# opt_cuts = [Plane(*val) for val in opt_cut_data]
+	#
+	# print("Opt Cut Cost: ", res)
+	# print("Opt Cut: ", compute_cut(opt_cuts, T, V, S, C))
+	#
+	# for cut in opt_cuts:
+	# 	r.add((intersection(cut, T), 'black',5),normal_length=0)
+	# r.show()
 
 
 set_eps(1e-10)
