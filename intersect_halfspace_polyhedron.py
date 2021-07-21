@@ -64,7 +64,7 @@ def compute_cut(cuts, T, V, S, C):
 	# cuts is a list of hyperplanes ordered so that cuts[i] cuts V[i].
 
 	faces = [(ConvexPolygon(tuple(s.point_set - {V[i]})),i) for i,s in enumerate(S)]
-	faces_active = copy.deepcopy(faces)
+	faces_active = [(ConvexPolygon(tuple(s.point_set - {V[i]})),i) for i,s in enumerate(S)]
 	#cut_cost_2d = float()				# cut cost is initially zero.
 	grid_cost_2d = float()
 	corner_cost_2d = float()
@@ -110,18 +110,24 @@ def compute_cut(cuts, T, V, S, C):
 				# raise TypeError("We should consider the case when T_active is not a polyhedron.")
 				continue
 
-			face_pol = intersection(c, face_active)
 
-			if not isinstance(face_active, ConvexPolygon):
+			face_pol = intersection(c, face_active)
+			print(face_active)
+			print(face_pol)
+
+			if not isinstance(face_pol, Segment):
 				# either face was removed
 				# or cut cuts along same as previous cut and no cost
 				continue
-				grid_cost_2d += grid_edges_cost_2d(face_pol, face[face_idx], C)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
-				S_faces = [intersection(face[face_idx], s) for s in S]
-				S_faces = filter(lambda s: s != None)
-				face_verts = face.points
 
-				corner_cost_2d += corner_edges_cost_2d(face_pol, S_faces, face_verts)
+			print("run")
+			grid_cost_2d += grid_edges_cost_2d(face_pol, faces[face_idx], C)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
+			S_faces = [intersection(faces[face_idx][0], s) for s in S if faces[face_idx][0] != None]
+			#S_faces = filter(lambda s: s != None, S_faces)
+
+			face_verts = faces[face_idx]
+
+			corner_cost_2d += corner_edges_cost_2d(face_pol, S_faces, face_verts)
 
 		T_active = inter_halfspace_convexpolyhedron(c,T_active,V[i])
 		for (face_active, face_idx) in faces_active:
@@ -142,6 +148,7 @@ def compute_cut(cuts, T, V, S, C):
 	# 	pen = max(pen, 2**(9*(1/3-min_d)))
 	# print("min distance: ", min_d)
 	# print("pen: ", pen)
+	print("2d Cost: ", corner_cost_2d +grid_cost_2d)
 	return pen*(grid_cost_3d + corner_cost_3d +corner_cost_2d +grid_cost_2d)
 
 def grid_edges_cost_3d(a, T, C):
