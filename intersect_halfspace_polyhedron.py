@@ -64,7 +64,7 @@ def compute_cut(cuts, T, V, S, C):
 	# cuts is a list of hyperplanes ordered so that cuts[i] cuts V[i].
 
 	faces = [(ConvexPolygon(tuple(s.point_set - {V[i]})),i) for i,s in enumerate(S)]
-	faces_active = [(ConvexPolygon(tuple(s.point_set - {V[i]})),i) for i,s in enumerate(S)]
+	#faces_active = [(ConvexPolygon(tuple(s.point_set - {V[i]})),i) for i,s in enumerate(S)]
 	#cut_cost_2d = float()				# cut cost is initially zero.
 	grid_cost_2d = float()
 	corner_cost_2d = float()
@@ -103,13 +103,16 @@ def compute_cut(cuts, T, V, S, C):
 		grid_cost_3d += grid_edges_cost_3d(pol, T, C)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
 		corner_cost_3d += corner_edges_cost_3d(pol, S, V)		# compute the contribution of the corner edges to the cost of a cut
 
-		for (face_active, face_idx) in faces_active:
+		for (face, face_idx) in faces:
+			face_active = intersection(face, T_active)
+			S_faces = [intersection(face, s) for s in S]
+			face_verts = face.points
+
 			if not isinstance(face_active, ConvexPolygon):
 				# if None then pruned face
 				# do we care about segments or points?
 				# raise TypeError("We should consider the case when T_active is not a polyhedron.")
 				continue
-
 
 			face_pol = intersection(c, face_active)
 			print(face_active)
@@ -120,19 +123,14 @@ def compute_cut(cuts, T, V, S, C):
 				# or cut cuts along same as previous cut and no cost
 				continue
 
-			print("run")
-			grid_cost_2d += grid_edges_cost_2d(face_pol, faces[face_idx], C)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
-			S_faces = [intersection(faces[face_idx][0], s) for s in S if faces[face_idx][0] != None]
+			grid_cost_2d += grid_edges_cost_2d(face_pol, face, C)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
+
 			#S_faces = filter(lambda s: s != None, S_faces)
 
 			face_verts = faces[face_idx]
-
 			corner_cost_2d += corner_edges_cost_2d(face_pol, S_faces, face_verts)
 
 		T_active = inter_halfspace_convexpolyhedron(c,T_active,V[i])
-		for (face_active, face_idx) in faces_active:
-			if face_active != None:
-				faces_active[face_idx] = (intersection(T_active, faces_active[face_idx][0]),face_idx)
 
 	pen = 1
 
