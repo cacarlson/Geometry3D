@@ -57,35 +57,23 @@ def inter_halfspace_convexpolyhedron(a,b,v):
 	return intersection(box, b)		# return the intersection
 
 def compute_cut(cuts, T, V, S, C):
-	return penality(cuts, T, V) * (compute_3d_cost(cuts, T, V, S, C) + compute_2d_cost() + compute_1d_cost())
-
-def penality(cuts, T, V):
-	pen = 0
-
-	for seg in T.segment_set:
-		for cut in cuts:
-			if not isinstance(intersection(seg, cut), Point):
-				pen = 2**(3)
-
-	for v in V:
-		min_d = 1/3
-		for cut in cuts:
-			min_d = min(min_d, 1/3-distance(v,cut))
-		pen = max(pen, 2**(9*(1/3-min_d)))
-	return 1
-
-def compute_3d_cost(cuts, T, V, S, C):
 	# T is the simplex that we want to cut.
 	# V is the list of vertices of T so that V[i] = vertex i of T.
 	# S is the list of top simplices such that S[i] is the top simplex related to V[i] for i in {1,2,3,4}.
 	# C is region of T \ union_of_(S[1], S[2], S[3], S[4]).
-	# No: Here I assume these objects have already been defined globally.
 	# cuts is a list of hyperplanes ordered so that cuts[i] cuts V[i].
 
+	faces = [(ConvexPolygon(tuple(s.point_set - {V[i]})),i) for i,s in enumerate(S)]
+	faces_active = copy.deepcopy(faces)
+	#cut_cost_2d = float()				# cut cost is initially zero.
+	grid_cost_2d = float()
+	corner_cost_2d = float()
+
 	T_active = copy.deepcopy(T)		# This is the copy of the simplex that we will work with.
-	cut_cost = float()				# cut cost is initially zero.
-	grid_cost = float()
-	corner_cost = float()
+	#cut_cost_3d = float()				# cut cost is initially zero.
+	grid_cost_3d = float()
+	corner_cost_3d = float()
+
 	for i,c in enumerate(cuts):
 		if not isinstance(T_active, ConvexPolyhedron):
 			raise TypeError("We should consider the case when T_active is not a polyhedron.")
@@ -107,20 +95,56 @@ def compute_3d_cost(cuts, T, V, S, C):
 		for segs in pol.segments():
 			mx_seg = max(mx_seg, segs.length())
 
-		#print("Area: ", pol.area(), print("Max Length: ", mx_seg))
 		if mx_seg < .001:
 			continue	# we should be careful with this case
 						# Note that we aren't adjusting T_active but the only way this should
 						# come up is if we are removing a small volume which shouldn't be the case
 
-		grid_cost += grid_edges_cost(pol, T, C)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
-		corner_cost += corner_edges_cost(pol, S, V)		# compute the contribution of the corner edges to the cost of a cut
-		# T_active = intersect(HalfSpace(c), T_active)
+		grid_cost_3d += grid_edges_cost_3d(pol, T, C)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
+		corner_cost_3d += corner_edges_cost_3d(pol, S, V)		# compute the contribution of the corner edges to the cost of a cut
+
+		for (face_active, face_idx) in faces_active:
+			if not isinstance(face_active, ConvexPolygon):
+				# if None then pruned face
+				# do we care about segments or points?
+				# raise TypeError("We should consider the case when T_active is not a polyhedron.")
+				continue
+
+			face_pol = intersection(c, face_active)
+
+			if not isinstance(face_active, ConvexPolygon):
+				# either face was removed
+				# or cut cuts along same as previous cut and no cost
+				continue
+				grid_cost_2d += grid_edges_cost_2d(face_pol, face[face_idx], C)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
+				S_faces = [intersection(face[face_idx], s) for s in S]
+				S_faces = filter(lambda s: s != None)
+				face_verts = face.points
+
+				corner_cost_2d += corner_edges_cost_2d(face_pol, S_faces, face_verts)
+
 		T_active = inter_halfspace_convexpolyhedron(c,T_active,V[i])
+		for (face_active, face_idx) in faces_active:
+			if face_active != None:
+				faces_active[face_idx] = (intersection(T_active, faces_active[face_idx][0]),face_idx)
 
-	return grid_cost + corner_cost
+	pen = 1
 
-def grid_edges_cost(a, T, C):
+	for seg in T.segment_set:
+		if seg in T_active:
+			pen = 2**(3)
+
+	# for v in V:
+	# 	min_d = 1/3
+	# 	for point in T_active.point_set:
+	# 		#print("distance: ", distance(point,v)/2)
+	# 		min_d = min(min_d, distance(point,v)/2)
+	# 	pen = max(pen, 2**(9*(1/3-min_d)))
+	# print("min distance: ", min_d)
+	# print("pen: ", pen)
+	return pen*(grid_cost_3d + corner_cost_3d +corner_cost_2d +grid_cost_2d)
+
+def grid_edges_cost_3d(a, T, C):
 	'''
 	Compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
 	'''
@@ -132,6 +156,8 @@ def grid_edges_cost(a, T, C):
 	if (a_grid == None):
 		#print ("Grid Cost: ", grid_cost)
 		return grid_cost
+	# if not isinstance(a_grid, ConvexPolyhedron):
+	# 	return grid_cost
 	# check whether a_grid is a convex polygon.
 	for seg in T.segment_set:
 		# we don't have to multiply by side length (be consistent)
@@ -142,7 +168,7 @@ def grid_edges_cost(a, T, C):
 
 	return grid_cost
 
-def corner_edges_cost(a, S, V):
+def corner_edges_cost_3d(a, S, V):
 	'''
 	Compute the contribution of the corner edges to the cost of a cut
 	'''
@@ -189,11 +215,69 @@ def corner_edges_cost(a, S, V):
 
 	return corner_cost
 
-def compute_2d_cost():
-	return 0
+def grid_edges_cost_2d(a, face, C):
+	'''
+	Compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
+	'''
+	# a is guaranteed to be a convex polygon
+	grid_cost = float()
 
-def compute_1d_cost():
-	return 0
+	a_grid = intersection(C, a)		# portion of a which contributes to grid edges' cost
+
+	if not isinstance(a_grid, Segment):
+		return grid_cost
+
+	for seg in face.segment_set:
+		grid_cost += (1/8) * seg.length() * a_grid.length() * abs(a_grid.line.dv.normalized() * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
+
+	return grid_cost
+
+def corner_edges_cost_2d(a, tris, verts):
+	'''
+	Compute the contribution of the corner edges to the cost of a cut
+	'''
+	# a is guaranteed to be a convex polygon
+	corner_cost = float()
+	penalty = 0
+	for i,s in enumerate(tris):
+		#print(a)
+		#print(s)
+		a_corner = intersection(a, s)		# portion of a that contributes to corner edges' cost related to s
+		# TODO: What if None?
+		if not isinstance(a_corner, ConvexPolygon):
+			# this could be empty
+			continue		# we should be careful with this case
+		# TODO: Maybe we keep this around?
+		seg_i = Segment(tuple(s.point_set - {verts[i]}))			# face of S[i] opposite to the vertex V[i]
+		proj_vertices = set()
+										# This is the set of vertices of a projection of a_corner on face_i
+		for p in a_corner.points:
+			# We need to make sure that p is not equal to V[i] otherwise Line() function below will raise a value error.
+			# dist = distance(V[i], p)
+			# if dist < 1/30:
+			# 	penalty += 100 * (1/30 - dist)
+			proj_vertex = intersection(Line(verts[i], p),seg_i)	# This is the "projection" of p on face_i
+			if not isinstance(proj_vertex, Point):
+				# Note to Charlie: This should not happen so error works
+				raise TypeError("Intersection is not a point.")				# We need to check whether p is of type Point.
+			proj_vertices.add(proj_vertex)
+		if len(proj_vertices) < 2:
+			# Note to Charlie: This should not happen either
+			raise ValueError("To build a polygon the number of points cannot be less than 3")		# The case when projection of a_corner on face_i is not a polygon.
+		proj_cut = Segment(tuple(proj_vertices))
+		# This seems off:
+		#corner_cost += (2)*(proj_cut.area() * math.sqrt(3) / 2)	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
+		corner_cost += proj_cut.length() * math.sqrt(3) /2 # + penalty
+
+		#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
+		# cost of face_i should be the same as moving it a little above
+		# area of trianlge times sum of unit vectors times unit vectors
+		# root(6)/2
+		# root(3)/2 * side length <-
+		# compute the contribution of corner edges incident to V[i]. We should also include a multiplicative constant.
+	#print("Corner Cost: ", corner_cost)
+
+	return corner_cost
 
 # Add 1D cost function for each edge
 def construct_simplex(a):
