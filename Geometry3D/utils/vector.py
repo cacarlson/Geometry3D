@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Vector Module""" 
+"""Vector Module"""
 import math
 # import numpy as np
 from .util import unify_types
@@ -11,12 +11,12 @@ class Vector(object):
     def zero(cls):
         """Returns the zero vector (0 | 0 | 0)"""
         return cls(0, 0, 0)
-    
+
     @classmethod
     def x_unit_vector(cls):
         """Returns the unit vector (1 | 0 | 0)"""
         return cls(1, 0, 0)
-    
+
     @classmethod
     def y_unit_vector(cls):
         """Returns the unit vector (0 | 1 | 0)"""
@@ -68,13 +68,13 @@ class Vector(object):
 
     def __repr__(self):
         return "Vector({}, {}, {})".format(*self._v)
-    
+
     def __eq__(self, other):
         return (self._v == other._v)
 
     def __add__(self, other):
         return Vector(x+y for x, y in zip(self, other))
-    
+
     def __sub__(self, other):
         return Vector([x-y for x, y in zip(self, other)])
 
@@ -85,7 +85,7 @@ class Vector(object):
 
     def __rmul__(self, other):
         return self * other
-    
+
     def __neg__(self):
         return self * -1
 
@@ -94,10 +94,10 @@ class Vector(object):
 
     def __setitem__(self, item, value):
         self._v[item] = value
-    
+
     # def tonumpy(self):
     #     return np.array(self._v)
-    
+
     def cross(self, other):
         r"""Calculates the cross product of two vectors, defined as
         _   _   / x2y3 - x3y2 \
@@ -127,11 +127,11 @@ class Vector(object):
         if self == other:
             return True
 
-        return abs(abs(self * other) - self.length() * other.length()) < get_eps() 
+        return abs(abs(self * other) - self.length() * other.length()) < get_eps()
 
     def orthogonal(self, other):
         """Returns true if the two vectors are orthogonal"""
-        return self * other == 0
+        return abs(self * other) <= get_eps()
 
     def angle(self, other):
         """Returns the angle (in radians) enclosed by both vectors."""

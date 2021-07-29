@@ -347,13 +347,16 @@ def inter_line_convexpolygon(l,cpg):
     output:
     intersection
     """
+    #print("we do stuff here")
     inter = intersection(l,cpg.plane)
     if inter is None:
         return None
+        #print("No Inter")
     elif isinstance(inter,Line):
         point_set = set()
         for segment in cpg.segments():
             inter_l_s = intersection(segment,l)
+            #print("Finding intersection of: ", l, " and ", segment)
             if inter_l_s is None:
                 continue
             elif isinstance(inter_l_s,Point):
