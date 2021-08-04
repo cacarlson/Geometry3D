@@ -4,6 +4,7 @@ import itertools
 from Geometry3D import *
 import matplotlib.pyplot as plt
 
+side_length =  2 * (2 ** 0.5) ## the simplex side length is sqrt(8) in the current implementation
 def inter_halfspace_convexpolyhedron(a,b,v):
 	'''
 	I used the idea that we discussed couple of meetings ago: defining a large enough cube so that it contains
@@ -155,7 +156,6 @@ def compute_cut(cuts, T, V, S, C, alpha):
 				# either face was removed
 				# or cut cuts along same as previous cut and no cost
 				continue
-
 			grid_cost_2d += grid_edges_cost_2d(face_pol, face, C_face)		# compute the contribution of the grid edges (those parallel to the sides of T) to the cost of a cut.
 			#print("Cont: ", corner_edges_cost_2d(face_pol, S_faces, verts_face))
 			# return 0
@@ -181,7 +181,8 @@ def compute_cut(cuts, T, V, S, C, alpha):
 	# print("pen: ", pen)
 	print("3d Cost: ", corner_cost_3d +grid_cost_3d)
 	print("2d Cost: ", corner_cost_2d +grid_cost_2d)
-	return pen*(grid_cost_3d + corner_cost_3d + corner_cost_2d +grid_cost_2d)
+	return pen*(grid_cost_3d + corner_cost_3d 
+				 + corner_cost_2d +grid_cost_2d)
 
 def grid_edges_cost_3d(a, T, C):
 	'''
@@ -202,9 +203,9 @@ def grid_edges_cost_3d(a, T, C):
 		# we don't have to multiply by side length (be consistent)
 		# LP cost depends on this choice
 		# Jafar: Removed seg.length() from the below product
-		grid_cost += (1/8) * seg.length() * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
-		#grid_cost += 1/3 * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
-
+		# note that in this implementation seg.length = sqrt(8)
+		#the formula below should work even if we rescale the simplex
+		grid_cost += (2 * (2 ** 0.5) / (side_length ** 2)) * a_grid.area() * abs(a_grid.plane.n * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
 	return grid_cost
 
 def corner_edges_cost_3d(a, S, V):
@@ -242,11 +243,11 @@ def corner_edges_cost_3d(a, S, V):
 		proj_cut = ConvexPolygon(tuple(proj_vertices))
 		# This seems off:
 		#corner_cost += (2)*(proj_cut.area() * math.sqrt(3) / 2)	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
-		corner_cost += proj_cut.area() * math.sqrt(3) /2 # + penalty
+		corner_cost += (4 * (3 ** 0.5) / side_length ** 2 ) * proj_cut.area() # + penalty
 
 		#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
 		# cost of face_i should be the same as moving it a little above
-		# area of trianlge times sum of unit vectors times unit vectors
+		# area of triangle times sum of unit vectors times unit vectors
 		# root(6)/2
 		# root(3)/2 * side length <-
 		# compute the contribution of corner edges incident to V[i]. We should also include a multiplicative constant.
@@ -265,9 +266,15 @@ def grid_edges_cost_2d(a, face, c_face):
 
 	if not isinstance(a_grid, Segment):
 		return grid_cost
+    
+	segs = [seg.line.dv.normalized() for seg in face.segments()]
+	altitudes = [segs[0] + segs[1] if segs[0] * segs[1] > 0 else segs[0] - segs[1],
+	             segs[0] + segs[2] if segs[0] * segs[2] > 0 else segs[0] - segs[2],
+				 segs[1] + segs[2] if segs[1] * segs[2] > 0 else segs[1] - segs[2]
+	]
 
-	for seg in face.segments():
-		grid_cost += seg.length() * a_grid.length() * abs(a_grid.line.dv.normalized() * seg.line.dv.normalized())	# compute the contribution of edges parallel to seg, a side of T.
+	for h in altitudes:
+		grid_cost = max(grid_cost, (4/(3 ** 0.5)) * a_grid.length() / side_length * abs(a_grid.line.dv.normalized() * h.normalized()))
 
 	return grid_cost
 
@@ -318,11 +325,11 @@ def corner_edges_cost_2d(a, S_face, verts_face):
 		proj_cut = Segment(proj_vertices[0], proj_vertices[1])
 		# This seems off:
 		#corner_cost += (2)*(proj_cut.area() * math.sqrt(3) / 2)	# Jafar: Included the multiplicative constant. Removed side length contribution from both types of cuts.
-		corner_cost += proj_cut.length() # + penalty
+		corner_cost += 2 * proj_cut.length() / side_length # + penalty
 
 		#*edge weights (area of proj_cut) / (area of face_i ) * (Cost of face_i)
 		# cost of face_i should be the same as moving it a little above
-		# area of trianlge times sum of unit vectors times unit vectors
+		# area of triangle times sum of unit vectors times unit vectors
 		# root(6)/2
 		# root(3)/2 * side length <-
 		# compute the contribution of corner edges incident to V[i]. We should also include a multiplicative constant.
@@ -365,3 +372,11 @@ def construct_simplex(a):
 		C = (inter_halfspace_convexpolyhedron(trim.plane, C, V[i]))
 
 	return (V, T, S, C, trims)		#Jafar: Added trims to the output for testing purposes.
+
+def LP_cost(alpha):
+	'''
+	Compute the LP cost for the given value of alpha. The function returns the 2d and 3d costs.
+	'''	
+	##LP cost: (d+1)/2 * (1 + (d - 1) * alpha ** d)
+	## we have 4 copies of the 2d instance
+	return (6 * (1 + alpha ** 2), 2 * (1 + 2 * alpha ** 3))

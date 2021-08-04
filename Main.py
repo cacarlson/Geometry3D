@@ -37,8 +37,8 @@ def CheckSimpleCuts(debug = False):
 	cut_costs = []
 	corner_costs = []
 	grid_costs = []
-	points = [alpha + off/6 for off in np.linspace(-.6,6/2-6/3-.01,20)]
-
+	points = [alpha + off for off in np.linspace(-.2,0.5-alpha-.01,20)]
+	print("LP cost: (2d cost, 3d cost) = ", LP_cost(alpha))
 	for beta in points:
 
 		_,_,_,_,cuts = construct_simplex(beta)
@@ -49,7 +49,7 @@ def CheckSimpleCuts(debug = False):
 		init_cuts = [Plane(*val) for val in init_data]
 
 		print(beta)
-		cut_cost = compute_cut(init_cuts,T,V,S,C)
+		cut_cost = compute_cut(init_cuts,T,V,S,C, alpha)
 
 		if debug:
 			# print("Corner Cost: ", corner_cost)
@@ -91,7 +91,7 @@ def OptimizeCut(init = None, debug = False):
 def main():
 	global V, T, C, S, trims, alpha
 
-	alpha = 1/3
+	alpha = 4/3
 	V,T,S,C,trims = construct_simplex(alpha)
 
 	# DrawSimplex()
