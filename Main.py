@@ -91,7 +91,7 @@ def OptimizeCut(init = None, debug = False):
 def main():
 	global V, T, C, S, trims, alpha
 
-	alpha = 4/3
+	alpha = 1/3
 	V,T,S,C,trims = construct_simplex(alpha)
 
 	# DrawSimplex()
