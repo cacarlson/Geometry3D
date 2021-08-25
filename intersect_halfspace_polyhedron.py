@@ -163,7 +163,7 @@ def compute_cut(cuts, T, V, S, C, alpha):
 
 		T_active = inter_halfspace_convexpolyhedron(c,T_active,V[i])
 
-	print("Min Dis: ", min_dis)
+#	print("Min Dis: ", min_dis)
 	pen = 2**(6*(2/3-min(min_dis, 2*alpha)))
 
 	for seg in T.segment_set:
@@ -179,10 +179,11 @@ def compute_cut(cuts, T, V, S, C, alpha):
 	# 	pen = max(pen, 2**(9*(1/3-min_d)))
 	# print("min distance: ", min_d)
 	# print("pen: ", pen)
-	print("3d Cost: ", corner_cost_3d +grid_cost_3d)
-	print("2d Cost: ", corner_cost_2d +grid_cost_2d)
-	return pen*(grid_cost_3d + corner_cost_3d 
-				 + corner_cost_2d +grid_cost_2d)
+#	print("3d Cost: ", corner_cost_3d +grid_cost_3d)
+#	print("2d Cost: ", corner_cost_2d +grid_cost_2d)
+
+##	pen = 1 # for debugging
+	return pen*(corner_cost_2d +grid_cost_2d), pen*(grid_cost_3d + corner_cost_3d) 
 
 def grid_edges_cost_3d(a, T, C):
 	'''
